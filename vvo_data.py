@@ -1,14 +1,14 @@
 import requests
-import pprint
 import datetime
-from datetime import timezone
 import re
 import pytz
 
-def get_vvo_data():
+timezone = pytz.timezone('Europe/Berlin')
+
+def get_vvo_data(stopid : str):
     url = 'https://webapi.vvo-online.de/dm'
     attributes = {
-    "stopid": "33000028",
+    "stopid": stopid,
     "limit": 10,
     "mot": [
         "Tram",
@@ -29,7 +29,7 @@ def get_data_entry(data : dict, i : int,  key : str) -> str:
     try:
         return data['Departures'][i][key]
     except:
-        return 'No Data'
+        return 'N/A'
 
 def get_data_time(data: str) -> datetime.time:
     try:
@@ -38,31 +38,70 @@ def get_data_time(data: str) -> datetime.time:
         return datetime.datetime.now()
 
 
-def convert_dotnet_date(dotnet_date_str):
+def convert_dotnet_date(dotnet_date_str: str) -> datetime.datetime:
+    """Convert .NET Date format to Python datetime"""
+    if not dotnet_date_str or dotnet_date_str == 'undefined':
+        return None
+
     match = re.search(r'/Date\((\d+)([+-]\d{4})\)/', dotnet_date_str)
     if not match:
-        raise ValueError("Invalid .NET date format")
-    timestamp_ms = int(match.group(1))
-    offset_str = match.group(2)
-    timestamp_seconds = timestamp_ms / 1000.0
-    utc_datetime = datetime.datetime.fromtimestamp(timestamp_seconds, tz=datetime.timezone.utc)
-    offset_hours = int(offset_str[1:3])
-    offset_minutes = int(offset_str[3:5])
-    if offset_str[0] == '-':
-        offset_hours = -offset_hours
-        offset_minutes = -offset_minutes
+        return None
 
-    offset_minutes_total = offset_hours * 60 + offset_minutes
-    local_datetime = utc_datetime + datetime.timedelta(minutes=offset_minutes_total)
-    tz = pytz.timezone('Europe/Berlin')
-    local_datetime = local_datetime.now(tz)
-    return local_datetime
+    try:
+        timestamp_ms = int(match.group(1))
+        offset_str = match.group(2)
+        timestamp_seconds = timestamp_ms / 1000.0
+        utc_datetime = datetime.datetime.fromtimestamp(
+            timestamp_seconds,
+            tz=datetime.timezone.utc
+        )
+        offset_hours = int(offset_str[1:3])
+        offset_minutes = int(offset_str[3:5])
+        if offset_str[0] == '-':
+            offset_hours = -offset_hours
+            offset_minutes = -offset_minutes
+        offset_minutes_total = offset_hours * 60 + offset_minutes
+        local_datetime = utc_datetime + datetime.timedelta(minutes=offset_minutes_total)
+        return local_datetime.astimezone(timezone)
+
+    except (ValueError, TypeError) as e:
+        print(f"Error parsing date {dotnet_date_str}: {e}")
+        return None
+
+def get_time_delta(time) -> datetime.datetime:
+    if not time:
+        return None
+
+    try:
+        now = datetime.datetime.now(timezone)
+        delta = time - now
+        return delta
+    except Exception as e:
+        print(f"Error calculating time difference: {e}")
+        return None
+
+
+def format_time_for_display(dt : datetime.datetime) -> str:
+    if not dt:
+        return 'N/A'
+    return dt.strftime('%H:%M')
+
+def format_deltatime_for_display(dt : datetime.timedelta) -> str:
+    if not dt:
+        return 'N/A'
+    return 'in ' + str(int(dt.total_seconds() / 60)) + ' Min'
+
 
 if __name__ == "__main__":
-    time = '/Date(1769273754966+0100)/'
+    time = '/Date(1770127232455+0100)/'
     result = convert_dotnet_date(time)
-    print(f"Result: {result}")
-    print(f"Formatted: {result.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(result)
+    print(type(result))
+    print(format_time_for_display(result))
+    delta = get_time_delta(result)
+    print(type(delta))
+    print(delta)
+    print(format_deltatime_for_display(delta))
 
 # data = get_vvo_data()
     # #pprint.pprint(data)
