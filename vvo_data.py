@@ -1,5 +1,5 @@
 import requests
-import datetime
+from datetime import datetime, timezone, timedelta
 import re
 import pytz
 
@@ -48,10 +48,39 @@ class VVO():
     def get_data(self) -> dict:
         return self.data
 
+def convert_utc_to_timezone(date_string, zone):
+    try:
+        match = re.match(r'/Date\((\d+)[+-]\d{4}\)/', date_string)
+        timestamp_ms = int(match.group(1))
+
+        utc_time = datetime.fromtimestamp(timestamp_ms / 1000.0, tz=timezone.utc)
+
+        time = utc_time.astimezone(pytz.timezone(zone))
+        return time
+    except:
+        return datetime.now()
+
+def format_datetime(time) -> str:
+    hours = time.hour
+    minutes = time.minute
+    return f"{hours:02d}:{minutes:02d}"
+
+def get_time_delta(time_a, time_b) -> datetime:
+    delta = time_a - time_b
+    minutes = int(delta.total_seconds() / 60)
+    if minutes < 0:
+        minutes = 0
+    return f"in {minutes} Min"
+
 if __name__ == "__main__":
     vvo = VVO()
     vvo.retrieve_stop_data('33000742')
-    print(vvo.get_data_entry(1))
+    print(vvo.get_data())
+    data = vvo.get_data_entry(0)
+    time_a = convert_utc_to_timezone(data[2], 'Europe/Berlin')
+    time_b = convert_utc_to_timezone(data[3], 'Europe/Berlin')
+    print(time_a, time_b, get_time_delta(time_a, time_b))
+
 
 
 

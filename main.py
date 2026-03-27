@@ -1,7 +1,7 @@
 import customtkinter
 from customtkinter import CTkButton
 
-from vvo_data import VVO
+import vvo_data
 
 customtkinter.set_appearance_mode('Dark')
 
@@ -12,6 +12,7 @@ DEP_FONT_BOLD =('Arial', 14, 'bold')
 DEP_FONT_REG =('Arial', 14)
 PUBLIC_TRANSPORT_ENTRIES = 7
 TRANSPORT_ENTRY_CUTOFF = 25
+TIMEZONE = 'Europe/Berlin'
 
 class CurrentDayFrame(customtkinter.CTkFrame):
     def __init__(self, master):
@@ -56,7 +57,7 @@ class PublicTransportFrame(customtkinter.CTkFrame):
             entry.grid(row = i, column = 0, sticky='nsew', padx = 2, pady = 2)
             self.entries.append(entry)
 
-        self.vvo = VVO()
+        self.vvo = vvo_data.VVO()
 
     def set_transport_entries(self):
         self.vvo.retrieve_stop_data(self.stop_id)
@@ -90,11 +91,14 @@ class TransportEntryFrame(customtkinter.CTkFrame):
             seperator.grid(sticky='nsew', columnspan =2, padx=0, pady=0)
 
     def set_transport_entry(self, next : tuple):
+        print(next)
         line_dir = (next[1][:TRANSPORT_ENTRY_CUTOFF] + '..') if len(next[1]) > TRANSPORT_ENTRY_CUTOFF else next[1]
+        line_time_sched = vvo_data.convert_utc_to_timezone(next[3], TIMEZONE)
+        line_time_real = vvo_data.convert_utc_to_timezone(next[2], TIMEZONE)
         self.line.configure(text = next[0] + ' ' + line_dir)
-        self.state.configure(text = next[2][:10])
-        self.time_real.configure(text = next[3][:10])
-        self.time_sched.configure(text= next[4][:10])
+        self.state.configure(text = next[4][:10])
+        self.time_real.configure(text = line_time_real)
+        self.time_sched.configure(text = line_time_sched)
 
 class Seperator(customtkinter.CTkFrame):
     def __init__(self, master):
