@@ -1,39 +1,127 @@
-from nicegui import ui
-import vvo_data
+import customtkinter
 
-box_colors = ['bg-blue-100', 'bg-green-100', 'bg-yellow-100', 'bg-red-100', 'bg-purple-100']
-dep_data = vvo_data.get_vvo_data('33000028')
-print(dep_data)
+customtkinter.set_appearance_mode('Dark')
 
-with ui.column().classes('w-full p-4 gap-2'):
-    ui.label('Departures').classes('text-2xl font-bold mb-4')
+PADDING = 10
+PADDING_TEXT = 5
+TAB_FONT =('Arial', 20)
+DEP_FONT_BOLD =('Arial', 14, 'bold')
+DEP_FONT_REG =('Arial', 14)
+PUBLIC_TRANSPORT_ENTRIES = 10
 
-    for i in range(10):
-        with ui.card().classes(f'w-full h-16 {box_colors[i%5]} relative p-2'):
-            #retreive data for each card
-            dep_line = vvo_data.get_data_entry(dep_data, i, 'LineName')
-            dep_dir =  vvo_data.get_data_entry(dep_data, i, 'Direction')
-            dep_time_sched =  vvo_data.get_data_entry(dep_data, i, 'ScheduledTime')
-            dep_time_real =  vvo_data.get_data_entry(dep_data, i, 'RealTime')
-            dep_state =  vvo_data.get_data_entry(dep_data, i, 'State')
+class CurrentDayFrame(customtkinter.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master)
 
-            #process time
-            dep_time_sched = vvo_data.convert_dotnet_date(dep_time_sched)
-            dep_time_real = vvo_data.convert_dotnet_date(dep_time_real)
-            dep_time_delta = vvo_data.get_time_delta(dep_time_real)
-            dep_time_delta = vvo_data.format_deltatime_for_display(dep_time_delta)
-            dep_time_real = vvo_data.format_time_for_display(dep_time_real)
-            dep_time_sched = vvo_data.format_time_for_display(dep_time_sched)
+        self.grid_columnconfigure(0, weight=1)
 
-            # Top-left label
-            ui.label(dep_line + ' ' + dep_dir).classes('absolute top-2 left-2  text-lg  font-bold')
-            # Top-right label
-            ui.label(str(dep_time_delta)).classes('absolute top-2 right-2  text-lg font-bold')
-            # Bottom-left label
-            ui.label(dep_state).classes('absolute bottom-2 left-2  text-lg font-bold')
-            # Bottom-right label
-            ui.label(str(dep_time_real)).classes('absolute bottom-2 right-2  text-lg font-bold')
-            #.strftime('%I:%M')
-ui.run()
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+
+        self._border_width = 1
+
+        self.current_time = customtkinter.CTkLabel(self, text='Current Time', font=('Arial', 48))
+        self.current_time.grid(row=0, column=0, sticky='nsew', padx=PADDING_TEXT, pady=(PADDING_TEXT,0))
+
+        self.current_day = customtkinter.CTkLabel(self, text='Current Day', font=('Arial', 18))
+        self.current_day.grid(row=1, column=0, padx=PADDING_TEXT, pady=(0,PADDING_TEXT))
+
+    def update_current_day(self):
+        self.current_time.configure(text = '17:36')
+        self.current_day.configure(text = 'Saturday, March 28, 2026')
+
+class CurrentDayWeatherFrame(customtkinter.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master)
+
+        self._border_width = 1
+
+class PublicTransportFrame(customtkinter.CTkScrollableFrame):
+    def __init__(self, master):
+        super().__init__(master, border_width = 1)
+
+        self.grid_columnconfigure(0, weight=1)
+
+        self.entries = []
+
+        for i in range(PUBLIC_TRANSPORT_ENTRIES):
+            entry = TransportEntryFrame(self)
+            entry.grid(sticky='nsew', padx = 0, pady = 0)
+            if i < PUBLIC_TRANSPORT_ENTRIES - 1:
+                seperator = Seperator(self)
+                seperator.grid(sticky='nsew', padx = 0, pady = 0)
+            self.entries.append(entry)
+
+class TransportEntryFrame(customtkinter.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master)
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+
+        self.line = customtkinter.CTkLabel(self, text='Line', font=DEP_FONT_BOLD)
+        self.state = customtkinter.CTkLabel(self, text='State', font=DEP_FONT_REG)
+        self.time_real= customtkinter.CTkLabel(self, text='Realtime', font=DEP_FONT_BOLD)
+        self.time_sched = customtkinter.CTkLabel(self, text='Scheduled Time', font=DEP_FONT_REG)
 
 
+        self.line.grid(row=0, column=0, sticky='nw', padx=PADDING_TEXT, pady=0)
+        self.state.grid(row=1, column=0, sticky='sw', padx=PADDING_TEXT, pady=0)
+        self.time_real.grid(row=0, column=0, sticky='ne', padx=PADDING_TEXT, pady=0)
+        self.time_sched.grid(row=1, column=0, sticky='se', padx=PADDING_TEXT, pady=0)
+
+class Seperator(customtkinter.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master, height = 2)
+        self._border_width = 1
+        self._corner_radius = 0
+
+class App(customtkinter.CTk):
+    def __init__(self):
+        super().__init__()
+
+        self.title('Pi Dashboard')
+        self.geometry('800x480')
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=3)
+
+        self.grid_rowconfigure(0, weight=1)  #
+        self.grid_rowconfigure(1, weight=3)
+
+        self.current_day = CurrentDayFrame(self)
+        self.current_day.grid(column=0, row=0, padx = PADDING, pady= PADDING, sticky='nsew')
+
+        self.current_day.update_current_day()
+
+        self.current_weather = CurrentDayWeatherFrame(self)
+        self.current_weather.grid(column=0, row=1, padx = PADDING, pady = (0,PADDING), sticky='nsew')
+
+        self.public_transport = PublicTransportFrame(self)
+        self.public_transport.grid(column=1, row=0, rowspan=2, padx=(0,PADDING), pady=(PADDING), sticky='nsew')
+
+app = App()
+app.mainloop()
+
+
+
+
+
+# class TabView(customtkinter.CTkTabview):
+#     def __init__(self, master, **kwargs):
+#         super().__init__(master, **kwargs)
+#
+#         self._anchor = 'n'
+#         self._border_width = 1
+#
+#         self.add('Public Transport')
+#         self.add('Weather')
+#
+#         for button in self._segmented_button._buttons_dict.values():
+#             button.configure(font=TAB_FONT)  # Change font using font object
+#             # button.configure(text='Change Text of Button')
+#
+#         self.entries = []
+#         for i in range(20):
+#             entry = customtkinter.CTkLabel(master=self.tab('Public Transport'))
+#             entry.grid(row=i, column = 0, padx=10, pady=5, sticky = 'nsew')
+#             self.entries.append(entry)
