@@ -1,4 +1,5 @@
 import customtkinter
+from customtkinter import CTkButton
 
 from vvo_data import VVO
 
@@ -9,7 +10,8 @@ PADDING_TEXT = 5
 TAB_FONT =('Arial', 20)
 DEP_FONT_BOLD =('Arial', 14, 'bold')
 DEP_FONT_REG =('Arial', 14)
-PUBLIC_TRANSPORT_ENTRIES = 10
+PUBLIC_TRANSPORT_ENTRIES = 7
+TRANSPORT_ENTRY_CUTOFF = 25
 
 class CurrentDayFrame(customtkinter.CTkFrame):
     def __init__(self, master):
@@ -38,37 +40,40 @@ class CurrentDayWeatherFrame(customtkinter.CTkFrame):
 
         self._border_width = 1
 
-class PublicTransportFrame(customtkinter.CTkScrollableFrame):
-    def __init__(self, master, stopid):
+class PublicTransportFrame(customtkinter.CTkFrame):
+    def __init__(self, master, stop_id):
         super().__init__(master, border_width = 1)
 
         self.grid_columnconfigure(0, weight=1)
-        self.stopid = stopid
+        for i in range(PUBLIC_TRANSPORT_ENTRIES):
+            self.grid_rowconfigure(i, weight=1)
+
+        self.stop_id = stop_id
         self.entries = []
 
         for i in range(PUBLIC_TRANSPORT_ENTRIES):
-            entry = TransportEntryFrame(self)
-            entry.grid(sticky='nsew', padx = 0, pady = 0)
-            if i < PUBLIC_TRANSPORT_ENTRIES - 1:
-                seperator = Seperator(self)
-                seperator.grid(sticky='nsew', padx = 0, pady = 0)
+            entry = TransportEntryFrame(self, i)
+            entry.grid(row = i, column = 0, sticky='nsew', padx = 2, pady = 2)
             self.entries.append(entry)
 
         self.vvo = VVO()
 
     def set_transport_entries(self):
-        self.vvo.retrieve_stop_data(self.stopid)
-        #print(self.vvo.get_data())
+        self.vvo.retrieve_stop_data(self.stop_id)
+        print("Retrieving VVO Data")
+        print(self.vvo.get_data())
         for i, e in enumerate(self.entries):
-            #print(self.vvo.get_data_entry(i))
             e.set_transport_entry(self.vvo.get_data_entry(i))
 
 class TransportEntryFrame(customtkinter.CTkFrame):
-    def __init__(self, master):
-        super().__init__(master)
+    def __init__(self, master, i : int):
+        super().__init__(master, bg_color='transparent', fg_color= 'transparent')
 
-        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=4)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
+        self.grid_propagate(False)
 
         self.line = customtkinter.CTkLabel(self, text='Line', font=DEP_FONT_BOLD)
         self.state = customtkinter.CTkLabel(self, text='State', font=DEP_FONT_REG)
@@ -77,18 +82,23 @@ class TransportEntryFrame(customtkinter.CTkFrame):
 
         self.line.grid(row=0, column=0, sticky='nw', padx=PADDING_TEXT, pady=0)
         self.state.grid(row=1, column=0, sticky='sw', padx=PADDING_TEXT, pady=0)
-        self.time_real.grid(row=0, column=0, sticky='ne', padx=PADDING_TEXT, pady=0)
-        self.time_sched.grid(row=1, column=0, sticky='se', padx=PADDING_TEXT, pady=0)
+        self.time_real.grid(row=0, column=1, sticky='ne', padx=PADDING_TEXT, pady=0)
+        self.time_sched.grid(row=1, column=1, sticky='se', padx=PADDING_TEXT, pady=0)
+
+        if i < PUBLIC_TRANSPORT_ENTRIES -1:
+            seperator = Seperator(self)
+            seperator.grid(sticky='nsew', columnspan =2, padx=0, pady=0)
 
     def set_transport_entry(self, next : tuple):
-        self.line.configure(text = next[0] + ' ' + next[1])
-        self.state.configure(text = next[2])
-        self.time_real.configure(text = next[3])
-        self.time_sched.configure(text= next[4])
+        line_dir = (next[1][:TRANSPORT_ENTRY_CUTOFF] + '..') if len(next[1]) > TRANSPORT_ENTRY_CUTOFF else next[1]
+        self.line.configure(text = next[0] + ' ' + line_dir)
+        self.state.configure(text = next[2][:10])
+        self.time_real.configure(text = next[3][:10])
+        self.time_sched.configure(text= next[4][:10])
 
 class Seperator(customtkinter.CTkFrame):
     def __init__(self, master):
-        super().__init__(master, height = 2)
+        super().__init__(master, height = 2, width = 2)
         self._border_width = 1
         self._corner_radius = 0
 
@@ -112,9 +122,13 @@ class App(customtkinter.CTk):
         self.current_weather = CurrentDayWeatherFrame(self)
         self.current_weather.grid(column=0, row=1, padx = PADDING, pady = (0,PADDING), sticky='nsew')
 
+        button = CTkButton(self.current_day, command = self.set_update_data, text = 'Update Data')
+        button.grid(column = 0, row = 2, padx = 20, pady = 20)
+
         self.public_transport = PublicTransportFrame(self, 33000028)
         self.public_transport.grid(column=1, row=0, rowspan=2, padx=(0,PADDING), pady=(PADDING), sticky='nsew')
 
+    def set_update_data(self):
         self.public_transport.set_transport_entries()
 
 app = App()
