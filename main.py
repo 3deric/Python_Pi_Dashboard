@@ -1,5 +1,7 @@
 import customtkinter
 
+from vvo_data import VVO
+
 customtkinter.set_appearance_mode('Dark')
 
 PADDING = 10
@@ -37,11 +39,11 @@ class CurrentDayWeatherFrame(customtkinter.CTkFrame):
         self._border_width = 1
 
 class PublicTransportFrame(customtkinter.CTkScrollableFrame):
-    def __init__(self, master):
+    def __init__(self, master, stopid):
         super().__init__(master, border_width = 1)
 
         self.grid_columnconfigure(0, weight=1)
-
+        self.stopid = stopid
         self.entries = []
 
         for i in range(PUBLIC_TRANSPORT_ENTRIES):
@@ -51,6 +53,15 @@ class PublicTransportFrame(customtkinter.CTkScrollableFrame):
                 seperator = Seperator(self)
                 seperator.grid(sticky='nsew', padx = 0, pady = 0)
             self.entries.append(entry)
+
+        self.vvo = VVO()
+
+    def set_transport_entries(self):
+        self.vvo.retrieve_stop_data(self.stopid)
+        #print(self.vvo.get_data())
+        for i, e in enumerate(self.entries):
+            #print(self.vvo.get_data_entry(i))
+            e.set_transport_entry(self.vvo.get_data_entry(i))
 
 class TransportEntryFrame(customtkinter.CTkFrame):
     def __init__(self, master):
@@ -64,11 +75,16 @@ class TransportEntryFrame(customtkinter.CTkFrame):
         self.time_real= customtkinter.CTkLabel(self, text='Realtime', font=DEP_FONT_BOLD)
         self.time_sched = customtkinter.CTkLabel(self, text='Scheduled Time', font=DEP_FONT_REG)
 
-
         self.line.grid(row=0, column=0, sticky='nw', padx=PADDING_TEXT, pady=0)
         self.state.grid(row=1, column=0, sticky='sw', padx=PADDING_TEXT, pady=0)
         self.time_real.grid(row=0, column=0, sticky='ne', padx=PADDING_TEXT, pady=0)
         self.time_sched.grid(row=1, column=0, sticky='se', padx=PADDING_TEXT, pady=0)
+
+    def set_transport_entry(self, next : tuple):
+        self.line.configure(text = next[0] + ' ' + next[1])
+        self.state.configure(text = next[2])
+        self.time_real.configure(text = next[3])
+        self.time_sched.configure(text= next[4])
 
 class Seperator(customtkinter.CTkFrame):
     def __init__(self, master):
@@ -96,8 +112,10 @@ class App(customtkinter.CTk):
         self.current_weather = CurrentDayWeatherFrame(self)
         self.current_weather.grid(column=0, row=1, padx = PADDING, pady = (0,PADDING), sticky='nsew')
 
-        self.public_transport = PublicTransportFrame(self)
+        self.public_transport = PublicTransportFrame(self, 33000028)
         self.public_transport.grid(column=1, row=0, rowspan=2, padx=(0,PADDING), pady=(PADDING), sticky='nsew')
+
+        self.public_transport.set_transport_entries()
 
 app = App()
 app.mainloop()
