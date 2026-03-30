@@ -1,5 +1,6 @@
 import customtkinter
 from customtkinter import CTkButton
+from PIL import Image
 
 import vvo_data
 
@@ -13,6 +14,7 @@ DEP_FONT_REG =('Arial', 14)
 PUBLIC_TRANSPORT_ENTRIES = 7
 TRANSPORT_ENTRY_CUTOFF = 25
 TIMEZONE = 'Europe/Berlin'
+STOP_ID = 33000028
 
 class CurrentDayFrame(customtkinter.CTkFrame):
     def __init__(self, master):
@@ -42,29 +44,19 @@ class CurrentDayWeatherFrame(customtkinter.CTkFrame):
         self._border_width = 1
 
 class PublicTransportFrame(customtkinter.CTkFrame):
-    def __init__(self, master, stop_id):
-        super().__init__(master, border_width = 1)
+    def __init__(self, master):
+        super().__init__(master, fg_color = 'transparent')
 
         self.grid_columnconfigure(0, weight=1)
         for i in range(PUBLIC_TRANSPORT_ENTRIES):
             self.grid_rowconfigure(i, weight=1)
 
-        self.stop_id = stop_id
         self.entries = []
 
         for i in range(PUBLIC_TRANSPORT_ENTRIES):
             entry = TransportEntryFrame(self, i)
-            entry.grid(row = i, column = 0, sticky='nsew', padx = 2, pady = 2)
+            entry.grid(row = i, column = 0, sticky='nsew', padx = 0, pady = 0)
             self.entries.append(entry)
-
-        self.vvo = vvo_data.VVO()
-
-    def set_transport_entries(self):
-        self.vvo.retrieve_stop_data(self.stop_id)
-        print("Retrieving VVO Data")
-        print(self.vvo.get_data())
-        for i, e in enumerate(self.entries):
-            e.set_transport_entry(self.vvo.get_data_entry(i))
 
 class TransportEntryFrame(customtkinter.CTkFrame):
     def __init__(self, master, i : int):
@@ -78,7 +70,7 @@ class TransportEntryFrame(customtkinter.CTkFrame):
 
         self.line = customtkinter.CTkLabel(self, text='Line', font=DEP_FONT_BOLD)
         self.state = customtkinter.CTkLabel(self, text='State', font=DEP_FONT_REG)
-        self.time_real= customtkinter.CTkLabel(self, text='Realtime', font=DEP_FONT_BOLD)
+        self.time_real= customtkinter.CTkLabel(self, text='Delta Time', font=DEP_FONT_BOLD)
         self.time_sched = customtkinter.CTkLabel(self, text='Scheduled Time', font=DEP_FONT_REG)
 
         self.line.grid(row=0, column=0, sticky='nw', padx=PADDING_TEXT, pady=0)
@@ -99,6 +91,40 @@ class TransportEntryFrame(customtkinter.CTkFrame):
         self.state.configure(text = next[4][:10])
         self.time_real.configure(text = line_time_real)
         self.time_sched.configure(text = line_time_sched)
+
+class TabViewFrame(customtkinter.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master, bg_color='transparent', border_width= 1)
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+        self._border_width = 1
+
+class TabView(customtkinter.CTkTabview):
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs, bg_color= 'transparent', fg_color= 'transparent')
+
+        tab_transport = self.add('Public Transport')
+        tab_weather = self.add('Weather')
+        tab_calendar = self.add('Calendar')
+
+        self.transport_image = customtkinter.CTkImage(light_image=Image.open('img/directions_bus_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
+                                                    dark_image=Image.open('img/directions_bus_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
+                                                    size=(24, 24))
+        self.weather_image = customtkinter.CTkImage(light_image=Image.open('img/cloud_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
+                                                    dark_image=Image.open('img/cloud_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
+                                                    size=(24, 24))
+        self.calendar_image = customtkinter.CTkImage(light_image=Image.open('img/calendar_month_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
+                                                    dark_image=Image.open('img/calendar_month_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
+                                                    size=(24, 24))
+
+        self.transport_button = self._segmented_button._buttons_dict['Public Transport']
+        self.weather_button = self._segmented_button._buttons_dict['Weather']
+        self.calendar_button = self._segmented_button._buttons_dict['Calendar']
+        self.transport_button.configure(font=TAB_FONT, image = self.transport_image, text = 'Public Transport')
+        self.weather_button.configure(font=TAB_FONT, image = self.weather_image, text = 'Weather')
+        self.calendar_button.configure(font=TAB_FONT, image = self.calendar_image, text = 'Calendar')
 
 class Seperator(customtkinter.CTkFrame):
     def __init__(self, master):
@@ -129,35 +155,42 @@ class App(customtkinter.CTk):
         button = CTkButton(self.current_day, command = self.set_update_data, text = 'Update Data')
         button.grid(column = 0, row = 2, padx = 20, pady = 20)
 
-        self.public_transport = PublicTransportFrame(self, 33000028)
-        self.public_transport.grid(column=1, row=0, rowspan=2, padx=(0,PADDING), pady=(PADDING), sticky='nsew')
+        self.tab_view_frame = TabViewFrame(self)
+        self.tab_view_frame.grid(column = 1, row = 0, rowspan = 2, padx = (0, PADDING), pady = (PADDING), sticky = 'nsew')
+
+        self.tab_view = TabView(self.tab_view_frame)
+        self.tab_view.grid(column=0, row=0, padx = 2, pady = 2,sticky = 'nsew')
+
+        self.public_transport = PublicTransportFrame(self.tab_view.tab('Public Transport'))
+        self.public_transport.pack(expand=True, fill='both')
+
+        #self.tab_view = TabView(self)
+        #self.tab_view.grid(column = 1, row = 0, rowspan = 2, padx = (0, PADDING), pady = (PADDING), sticky = 'nsew')
+
+        #self.public_transport = PublicTransportFrame(self.tab_view, 33000028)
+        #self.public_transport.grid(column=1, row=0, rowspan=2, padx=(0,PADDING), pady=(PADDING), sticky='nsew')
 
     def set_update_data(self):
-        self.public_transport.set_transport_entries()
+        self.set_transport_entries()
 
-app = App()
-app.mainloop()
+    def set_transport_entries(self):
+        vvo.retrieve_stop_data(STOP_ID)
+        print('Retrieving VVO Data')
+        print(vvo.get_data())
+        for i, e in enumerate(self.public_transport.entries):
+            e.set_transport_entry(vvo.get_data_entry(i))
+
+    def set_weather_panel(self):
+        pass
+
+    def set_weather_entries(self):
+        pass
+
+if __name__ == "__main__":
+    vvo = vvo_data.VVOData()
+    app = App()
+    app.mainloop()
 
 
 
 
-
-# class TabView(customtkinter.CTkTabview):
-#     def __init__(self, master, **kwargs):
-#         super().__init__(master, **kwargs)
-#
-#         self._anchor = 'n'
-#         self._border_width = 1
-#
-#         self.add('Public Transport')
-#         self.add('Weather')
-#
-#         for button in self._segmented_button._buttons_dict.values():
-#             button.configure(font=TAB_FONT)  # Change font using font object
-#             # button.configure(text='Change Text of Button')
-#
-#         self.entries = []
-#         for i in range(20):
-#             entry = customtkinter.CTkLabel(master=self.tab('Public Transport'))
-#             entry.grid(row=i, column = 0, padx=10, pady=5, sticky = 'nsew')
-#             self.entries.append(entry)
