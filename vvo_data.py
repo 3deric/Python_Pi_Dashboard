@@ -4,14 +4,16 @@ import re
 import pytz
 
 class VVOData():
-    def __init__(self):
+    def __init__(self, stopid : str):
         self.timezone = pytz.timezone('Europe/Berlin')
+        self.stopid = stopid
         self.data = {}
 
-    def retrieve_stop_data(self, stopid : str):
+
+    def retrieve_stop_data(self):
         url = 'https://webapi.vvo-online.de/dm'
         attributes = {
-        "stopid": stopid,
+        "stopid": self.stopid,
         "limit": 10,
         "mot": [
             "Tram",
@@ -73,8 +75,8 @@ def get_time_delta(time_a, time_b) -> datetime:
     return f"in {minutes} Min"
 
 if __name__ == "__main__":
-    vvo = VVO()
-    vvo.retrieve_stop_data('33000742')
+    vvo = VVOData('33000742')
+    vvo.retrieve_stop_data()
     print(vvo.get_data())
     data = vvo.get_data_entry(0)
     time_a = convert_utc_to_timezone(data[2], 'Europe/Berlin')

@@ -28,7 +28,6 @@ class WeatherData():
 						"wind_direction_10m", "precipitation"],
 			"timezone": "Europe/Berlin",
 		}
-
 		
 	def retrieve_data(self):
 		responses = self.openmeteo.weather_api(self.url, params=self.params)

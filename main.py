@@ -3,6 +3,7 @@ from customtkinter import CTkButton
 from PIL import Image
 
 import vvo_data
+import weather_data
 
 customtkinter.set_appearance_mode('Dark')
 
@@ -15,6 +16,8 @@ PUBLIC_TRANSPORT_ENTRIES = 7
 TRANSPORT_ENTRY_CUTOFF = 25
 TIMEZONE = 'Europe/Berlin'
 STOP_ID = 33000028
+LAT = 51.0509
+LONG = 13.7383
 
 class CurrentDayFrame(customtkinter.CTkFrame):
     def __init__(self, master):
@@ -172,22 +175,30 @@ class App(customtkinter.CTk):
 
     def set_update_data(self):
         self.set_transport_entries()
+        self.set_weather_panel()
 
     def set_transport_entries(self):
-        vvo.retrieve_stop_data(STOP_ID)
+        vvo.retrieve_stop_data()
         print('Retrieving VVO Data')
         print(vvo.get_data())
         for i, e in enumerate(self.public_transport.entries):
             e.set_transport_entry(vvo.get_data_entry(i))
 
     def set_weather_panel(self):
-        pass
+        weather.retrieve_data()
+        print(f"Current temperature_2m: {weather.get_current_temperature()}")
+        print(f"Current relative_humidity_2m: {weather.get_current_relative_humidity()}")
+        print(f"Current weather_code: {weather.get_current_weather_code()}")
+        print(f"Current wind_speed_10m: {weather.get_current_wind_speed_10m()}")
+        print(f"Current wind_direction_10m: {weather.get_current_wind_direction_10m()}")
+        print(f"Current precipitation: {weather.get_current_precipitation()}")
 
     def set_weather_entries(self):
         pass
 
 if __name__ == "__main__":
-    vvo = vvo_data.VVOData()
+    vvo = vvo_data.VVOData(STOP_ID)
+    weather = weather_data.WeatherData(LAT, LONG)
     app = App()
     app.mainloop()
 
