@@ -1,4 +1,5 @@
 import customtkinter
+from PIL.Image import alpha_composite
 from customtkinter import CTkButton
 from PIL import Image
 
@@ -40,11 +41,30 @@ class CurrentDayFrame(customtkinter.CTkFrame):
         self.current_time.configure(text = '17:36')
         self.current_day.configure(text = 'Saturday, March 28, 2026')
 
-class CurrentDayWeatherFrame(customtkinter.CTkFrame):
+class CurrentWeatherFrame(customtkinter.CTkFrame):
     def __init__(self, master):
         super().__init__(master)
 
         self._border_width = 1
+        self.grid_columnconfigure(0, weight = 1)
+        self.grid_rowconfigure(0, weight = 1)
+        self.grid_rowconfigure(1, weight=1)
+
+class CurrentWeatherView(customtkinter.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master, fg_color = 'green')
+        self.grid_columnconfigure(0, weight = 1)
+        self.grid_columnconfigure(1, weight = 1)
+        self.grid_rowconfigure(0, weight = 1)
+        self.grid_rowconfigure(1, weight=1)
+
+        self.current_temp = customtkinter.CTkLabel(self, text='10°C', font=('Arial', 20))
+        self.today_temps = customtkinter.CTkLabel(self, text = '10 to 15 °C')
+        self.current_humidity = customtkinter.CTkLabel(self, text = '70 % rH')
+
+        self.current_temp.grid(row=0, column=0, sticky='nw', padx=PADDING_TEXT, pady=0)
+        self.today_temps.grid(row=1, column=0, sticky='sw', padx=PADDING_TEXT, pady=0)
+        self.current_humidity.grid(row=1, column=1, sticky='se', padx=PADDING_TEXT, pady=0)
 
 class PublicTransportFrame(customtkinter.CTkFrame):
     def __init__(self, master):
@@ -152,8 +172,13 @@ class App(customtkinter.CTk):
 
         self.current_day.update_current_day()
 
-        self.current_weather = CurrentDayWeatherFrame(self)
-        self.current_weather.grid(column=0, row=1, padx = PADDING, pady = (0,PADDING), sticky='nsew')
+        self.current_weather_frame = CurrentWeatherFrame(self)
+        self.current_weather_frame.grid(column=0, row=1, padx = PADDING, pady = (0,PADDING), sticky='nsew')
+
+        self.current_weather = CurrentWeatherView(self.current_weather_frame)
+        self.current_weather.grid(column = 0, row = 0, sticky = 'nsew')
+        self.current_weather2 = CurrentWeatherView(self.current_weather_frame)
+        self.current_weather2.grid(column = 0, row = 1, sticky = 'nsew')
 
         button = CTkButton(self.current_day, command = self.set_update_data, text = 'Update Data')
         button.grid(column = 0, row = 2, padx = 20, pady = 20)
