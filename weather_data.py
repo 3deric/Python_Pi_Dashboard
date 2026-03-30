@@ -49,11 +49,11 @@ class WeatherData():
 
 		# Process daily data. The order of variables needs to be the same as requested.
 		daily = response.Daily()
-		daily_weather_code = daily.Variables(0).ValuesAsNumpy()
-		daily_temperature_2m_max = daily.Variables(1).ValuesAsNumpy()
-		daily_temperature_2m_min = daily.Variables(2).ValuesAsNumpy()
-		daily_precipitation_probability_max = daily.Variables(3).ValuesAsNumpy()
-		daily_wind_speed_10m_max = daily.Variables(4).ValuesAsNumpy()
+		self.daily_weather_code = daily.Variables(0).ValuesAsNumpy()
+		self.daily_temperature_2m_max = daily.Variables(1).ValuesAsNumpy()
+		self.daily_temperature_2m_min = daily.Variables(2).ValuesAsNumpy()
+		self.daily_precipitation_probability_max = daily.Variables(3).ValuesAsNumpy()
+		self.daily_wind_speed_10m_max = daily.Variables(4).ValuesAsNumpy()
 
 		daily_data = {"date": pd.date_range(
 			start = pd.to_datetime(daily.Time() + response.UtcOffsetSeconds(), unit = "s", utc = True),
@@ -62,41 +62,45 @@ class WeatherData():
 			inclusive = "left"
 		)}
 
-		daily_data["weather_code"] = daily_weather_code
-		daily_data["temperature_2m_max"] = daily_temperature_2m_max
-		daily_data["temperature_2m_min"] = daily_temperature_2m_min
-		daily_data["precipitation_probability_max"] = daily_precipitation_probability_max
-		daily_data["wind_speed_10m_max"] = daily_wind_speed_10m_max
+		daily_data["weather_code"] = self.daily_weather_code
+		daily_data["temperature_2m_max"] = self.daily_temperature_2m_max
+		daily_data["temperature_2m_min"] = self.daily_temperature_2m_min
+		daily_data["precipitation_probability_max"] = self.daily_precipitation_probability_max
+		daily_data["wind_speed_10m_max"] = self.daily_wind_speed_10m_max
 
-		daily_dataframe = pd.DataFrame(data = daily_data)
-		print(daily_dataframe)
+		self.daily_dataframe = pd.DataFrame(data = daily_data)
 
 	def get_current_temperature(self) -> string:
-		return self.current_temperature_2m
+		return str(int(self.current_temperature_2m)) + ' °C'
 
 	def get_current_relative_humidity(self) -> string:
-		return self.current_relative_humidity_2m
+		return str(int(self.current_relative_humidity_2m)) + ' rH'
 
 	def get_current_weather_code(self) -> string:
 		return self.current_weather_code
 
 	def get_current_wind_speed_10m(self) -> string:
-		return self.current_wind_speed_10m
+		return str(int(self.current_wind_speed_10m)) + ' m/s'
 
 	def get_current_wind_direction_10m(self) -> string:
 		return self.current_wind_direction_10m
 
 	def get_current_precipitation(self) -> string:
-		return self.current_precipitation
+		return str(int(self.current_precipitation)) + ' %'
+
+	def get_current_min_max_temp(self) -> string:
+		return str(int(self.daily_dataframe['temperature_2m_min'][0])) + ' °C to ' + str(int(self.daily_dataframe['temperature_2m_max'][0])) + ' °C'
 
 if __name__ == "__main__":
 	weather = WeatherData(51.0509,13.7383)
 	weather.retrieve_data()
 
-	print(f"Current temperature_2m: {weather.get_current_temperature()}")
-	print(f"Current relative_humidity_2m: {weather.get_current_relative_humidity()}")
-	print(f"Current weather_code: {weather.get_current_weather_code()}")
-	print(f"Current wind_speed_10m: {weather.get_current_wind_speed_10m()}")
-	print(f"Current wind_direction_10m: {weather.get_current_wind_direction_10m()}")
-	print(f"Current precipitation: {weather.get_current_precipitation()}")
+	print(weather.get_current_min_max_temp())
+
+	# print(f"Current temperature_2m: {weather.get_current_temperature()}")
+	# print(f"Current relative_humidity_2m: {weather.get_current_relative_humidity()}")
+	# print(f"Current weather_code: {weather.get_current_weather_code()}")
+	# print(f"Current wind_speed_10m: {weather.get_current_wind_speed_10m()}")
+	# print(f"Current wind_direction_10m: {weather.get_current_wind_direction_10m()}")
+	# print(f"Current precipitation: {weather.get_current_precipitation()}")
 

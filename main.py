@@ -66,6 +66,11 @@ class CurrentWeatherView(customtkinter.CTkFrame):
         self.today_temps.grid(row=1, column=0, sticky='sw', padx=PADDING_TEXT, pady=0)
         self.current_humidity.grid(row=1, column=1, sticky='se', padx=PADDING_TEXT, pady=0)
 
+    def set_current_weather_view(self, next):
+        self.current_temp.configure(text = next[0])
+        self.today_temps.configure(text = next[1])
+        self.current_humidity.configure(text = next[2])
+
 class PublicTransportFrame(customtkinter.CTkFrame):
     def __init__(self, master):
         super().__init__(master, fg_color = 'transparent')
@@ -211,6 +216,10 @@ class App(customtkinter.CTk):
 
     def set_weather_panel(self):
         weather.retrieve_data()
+
+        self.current_weather.set_current_weather_view((weather.get_current_temperature(),
+                                                       weather.get_current_min_max_temp(),
+                                                       weather.get_current_relative_humidity()))
         print(f"Current temperature_2m: {weather.get_current_temperature()}")
         print(f"Current relative_humidity_2m: {weather.get_current_relative_humidity()}")
         print(f"Current weather_code: {weather.get_current_weather_code()}")
