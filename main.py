@@ -1,21 +1,26 @@
+from unittest.mock import DEFAULT
+
 import customtkinter
-from PIL.Image import alpha_composite
 from customtkinter import CTkButton
 from PIL import Image
+import datetime
 
 import vvo_data
 import weather_data
+from vvo_data import get_time_delta
 
 customtkinter.set_appearance_mode('Dark')
 
 PADDING = 10
-PADDING_TEXT = 5
+PADDING_TEXT = 10
+DEFAULT_FONT = ('Arial', 14)
+CLOCK_FONT = ('Arial', 72, 'bold')
+WEATHER_FONT = ('Arial', 48, 'bold')
 TAB_FONT =('Arial', 20)
 DEP_FONT_BOLD =('Arial', 14, 'bold')
 DEP_FONT_REG =('Arial', 14)
 PUBLIC_TRANSPORT_ENTRIES = 7
 TRANSPORT_ENTRY_CUTOFF = 25
-TIMEZONE = 'Europe/Berlin'
 STOP_ID = 33000028
 LAT = 51.0509
 LONG = 13.7383
@@ -31,15 +36,18 @@ class CurrentDayFrame(customtkinter.CTkFrame):
 
         self._border_width = 1
 
-        self.current_time = customtkinter.CTkLabel(self, text='Current Time', font=('Arial', 48))
+        self.current_time = customtkinter.CTkLabel(self, text='Current Time', font= CLOCK_FONT)
         self.current_time.grid(row=0, column=0, sticky='nsew', padx=PADDING_TEXT, pady=(PADDING_TEXT,0))
 
-        self.current_day = customtkinter.CTkLabel(self, text='Current Day', font=('Arial', 18))
+        self.current_day = customtkinter.CTkLabel(self, text='Current Day', font=DEFAULT_FONT)
         self.current_day.grid(row=1, column=0, padx=PADDING_TEXT, pady=(0,PADDING_TEXT))
 
     def update_current_day(self):
-        self.current_time.configure(text = '17:36')
-        self.current_day.configure(text = 'Saturday, March 28, 2026')
+        now = datetime.datetime.now()
+        current_time = str(now.hour) + ':' + str(now.minute).zfill(2)
+        current_day = now.strftime("%A") + ' ' + str(now.day) + '. ' + now.strftime("%B") + ', ' + str(now.year)
+        self.current_time.configure(text = current_time)
+        self.current_day.configure(text = current_day) #Saturday, March 28, 2026'
 
 class CurrentWeatherFrame(customtkinter.CTkFrame):
     def __init__(self, master):
@@ -58,13 +66,13 @@ class CurrentWeatherView(customtkinter.CTkFrame):
         self.grid_rowconfigure(0, weight = 1)
         self.grid_rowconfigure(1, weight=1)
 
-        self.current_temp = customtkinter.CTkLabel(self, text='10°C', font=('Arial', 20))
-        self.today_temps = customtkinter.CTkLabel(self, text = '10 to 15 °C')
-        self.current_humidity = customtkinter.CTkLabel(self, text = '70 % rH')
+        self.current_temp = customtkinter.CTkLabel(self, text='10°C', font=WEATHER_FONT)
+        self.today_temps = customtkinter.CTkLabel(self, text = '10 to 15 °C', font = DEFAULT_FONT)
+        self.current_humidity = customtkinter.CTkLabel(self, text = '70 % rH', font = DEFAULT_FONT)
 
-        self.current_temp.grid(row=0, column=0, sticky='nw', padx=PADDING_TEXT, pady=0)
-        self.today_temps.grid(row=1, column=0, sticky='sw', padx=PADDING_TEXT, pady=0)
-        self.current_humidity.grid(row=1, column=1, sticky='se', padx=PADDING_TEXT, pady=0)
+        self.current_temp.grid(row=0, column=0, sticky='nw', padx=PADDING_TEXT, pady=PADDING_TEXT)
+        self.today_temps.grid(row=1, column=0, sticky='sw', padx=PADDING_TEXT, pady=PADDING_TEXT)
+        self.current_humidity.grid(row=1, column=1, sticky='se', padx=PADDING_TEXT, pady=PADDING_TEXT)
 
     def set_current_weather_view(self, next):
         self.current_temp.configure(text = next[0])
@@ -85,6 +93,13 @@ class PublicTransportFrame(customtkinter.CTkFrame):
             entry = TransportEntryFrame(self, i)
             entry.grid(row = i, column = 0, sticky='nsew', padx = 0, pady = 0)
             self.entries.append(entry)
+
+    def set_transport_entries(self):
+        vvo.retrieve_stop_data()
+        print('Retrieving VVO Data')
+        print(vvo.get_data())
+        for i, e in enumerate(self.entries):
+            e.set_transport_entry(vvo.get_data_entry(i))
 
 class TransportEntryFrame(customtkinter.CTkFrame):
     def __init__(self, master, i : int):
@@ -108,17 +123,17 @@ class TransportEntryFrame(customtkinter.CTkFrame):
 
         if i < PUBLIC_TRANSPORT_ENTRIES -1:
             seperator = Seperator(self)
-            seperator.grid(sticky='nsew', columnspan =2, padx=0, pady=0)
+            seperator.grid(sticky='nsew', columnspan =2, padx=PADDING_TEXT, pady=0)
 
     def set_transport_entry(self, next : tuple):
         print(next)
         line_dir = (next[1][:TRANSPORT_ENTRY_CUTOFF] + '..') if len(next[1]) > TRANSPORT_ENTRY_CUTOFF else next[1]
-        line_time_sched = vvo_data.convert_utc_to_timezone(next[3], TIMEZONE)
-        line_time_real = vvo_data.convert_utc_to_timezone(next[2], TIMEZONE)
+        line_time_sched = vvo_data.convert_utc_to_timezone(next[3])
+        line_time_real = get_time_delta(vvo_data.convert_utc_to_timezone(next[2]))
         self.line.configure(text = next[0] + ' ' + line_dir)
         self.state.configure(text = next[4][:10])
         self.time_real.configure(text = line_time_real)
-        self.time_sched.configure(text = line_time_sched)
+        self.time_sched.configure(text = str(line_time_sched.hour) + ':' + str(line_time_sched.minute).zfill(2))
 
 class TabViewFrame(customtkinter.CTkFrame):
     def __init__(self, master):
@@ -182,11 +197,9 @@ class App(customtkinter.CTk):
 
         self.current_weather = CurrentWeatherView(self.current_weather_frame)
         self.current_weather.grid(column = 0, row = 0, sticky = 'nsew')
-        self.current_weather2 = CurrentWeatherView(self.current_weather_frame)
-        self.current_weather2.grid(column = 0, row = 1, sticky = 'nsew')
 
-        button = CTkButton(self.current_day, command = self.set_update_data, text = 'Update Data')
-        button.grid(column = 0, row = 2, padx = 20, pady = 20)
+        #button = CTkButton(self.current_day, command = self.set_update_data, text = 'Update Data')
+        #button.grid(column = 0, row = 2, padx = 20, pady = 20)
 
         self.tab_view_frame = TabViewFrame(self)
         self.tab_view_frame.grid(column = 1, row = 0, rowspan = 2, padx = (0, PADDING), pady = (PADDING), sticky = 'nsew')
@@ -197,22 +210,9 @@ class App(customtkinter.CTk):
         self.public_transport = PublicTransportFrame(self.tab_view.tab('Public Transport'))
         self.public_transport.pack(expand=True, fill='both')
 
-        #self.tab_view = TabView(self)
-        #self.tab_view.grid(column = 1, row = 0, rowspan = 2, padx = (0, PADDING), pady = (PADDING), sticky = 'nsew')
-
-        #self.public_transport = PublicTransportFrame(self.tab_view, 33000028)
-        #self.public_transport.grid(column=1, row=0, rowspan=2, padx=(0,PADDING), pady=(PADDING), sticky='nsew')
-
     def set_update_data(self):
-        self.set_transport_entries()
-        self.set_weather_panel()
-
-    def set_transport_entries(self):
-        vvo.retrieve_stop_data()
-        print('Retrieving VVO Data')
-        print(vvo.get_data())
-        for i, e in enumerate(self.public_transport.entries):
-            e.set_transport_entry(vvo.get_data_entry(i))
+        self.public_transport.set_transport_entries()
+        #self.set_weather_panel()
 
     def set_weather_panel(self):
         weather.retrieve_data()

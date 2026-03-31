@@ -3,6 +3,8 @@ from datetime import datetime, timezone, timedelta
 import re
 import pytz
 
+TIMEZONE = 'Europe/Berlin'
+
 class VVOData():
     def __init__(self, stopid : str):
         self.timezone = pytz.timezone('Europe/Berlin')
@@ -50,14 +52,14 @@ class VVOData():
     def get_data(self) -> dict:
         return self.data
 
-def convert_utc_to_timezone(date_string, zone):
+def convert_utc_to_timezone(date_string):
     try:
         match = re.match(r'/Date\((\d+)[+-]\d{4}\)/', date_string)
         timestamp_ms = int(match.group(1))
 
         utc_time = datetime.fromtimestamp(timestamp_ms / 1000.0, tz=timezone.utc)
 
-        time = utc_time.astimezone(pytz.timezone(zone))
+        time = utc_time.astimezone(pytz.timezone(TIMEZONE))
         return time
     except:
         return datetime.now()
@@ -67,8 +69,9 @@ def format_datetime(time) -> str:
     minutes = time.minute
     return f"{hours:02d}:{minutes:02d}"
 
-def get_time_delta(time_a, time_b) -> datetime:
-    delta = time_a - time_b
+def get_time_delta(time) -> datetime:
+    now = datetime.now().astimezone(pytz.timezone(TIMEZONE))
+    delta = time - now
     minutes = int(delta.total_seconds() / 60)
     if minutes < 0:
         minutes = 0
@@ -79,6 +82,6 @@ if __name__ == "__main__":
     vvo.retrieve_stop_data()
     print(vvo.get_data())
     data = vvo.get_data_entry(0)
-    time_a = convert_utc_to_timezone(data[2], 'Europe/Berlin')
-    time_b = convert_utc_to_timezone(data[3], 'Europe/Berlin')
-    print(time_a, time_b, get_time_delta(time_a, time_b))
+    time = convert_utc_to_timezone(data[3])
+    print(get_time_delta(time))
+    #print(time_b, time_a, get_time_delta(time_a, time_b))
