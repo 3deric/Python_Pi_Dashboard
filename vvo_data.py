@@ -69,8 +69,11 @@ def format_datetime(time) -> str:
     minutes = time.minute
     return f"{hours:02d}:{minutes:02d}"
 
-def get_time_delta(time) -> datetime:
-    now = datetime.now().astimezone(pytz.timezone(TIMEZONE))
+def get_time_delta(time) -> str:
+    tz = pytz.timezone(TIMEZONE)
+    if time.tzinfo is None:
+        time = tz.localize(time)
+    now = datetime.now(tz)
     delta = time - now
     minutes = int(delta.total_seconds() / 60)
     if minutes < 0:

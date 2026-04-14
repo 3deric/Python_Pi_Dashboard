@@ -5,14 +5,14 @@ import customtkinter
 from PIL.ImageOps import pad
 from customtkinter import CTkButton
 from PIL import Image
-import datetime
+from datetime import datetime, timedelta
 
 import weather_icons
 import vvo_data
 import weather_data
 from vvo_data import get_time_delta
 
-customtkinter.set_appearance_mode('Light')
+customtkinter.set_appearance_mode('light')
 customtkinter.set_default_color_theme("blue")
 
 PADDING = 5
@@ -22,7 +22,7 @@ DEFAULT_FONT_BOLD = ('Arial', 16, 'bold')
 CLOCK_FONT = ('Arial', 72, 'bold')
 WEATHER_FONT = ('Arial', 48, 'bold')
 WEATHER_DAY_FONT = ('Arial', 20, 'bold')
-WEATHER_DAY_IMAGE_SIZE = 72
+WEATHER_DAY_IMAGE_SIZE = 96
 WEATHER_FORECAST_IMAGE_SIZE = 48
 TAB_FONT =('Arial', 20)
 DEP_FONT_BOLD =('Arial', 16, 'bold')
@@ -51,7 +51,7 @@ class CurrentDayFrame(customtkinter.CTkFrame):
         self.current_day.grid(row=1, column=0, padx=PADDING_TEXT, pady=(0,PADDING_TEXT))
 
     def update_current_day(self):
-        now = datetime.datetime.now()
+        now = datetime.now()
         current_time = str(now.hour) + ':' + str(now.minute).zfill(2)
         current_day = now.strftime("%A") + ' ' + str(now.day) + '. ' + now.strftime("%B") + ', ' + str(now.year)
         self.current_time.configure(text = current_time)
@@ -92,10 +92,10 @@ class CurrentWeatherFrame(customtkinter.CTkFrame):
                                                       weather.get_current_min_max_temp(),
                                                       weather.get_current_relative_humidity()))
 
+        today = datetime.today()
         for i, fc in enumerate(self.weather_forecast):
-            print(weather.get_forecast_weather_code(i + 1))
-            print(weather.get_forecast_min_max_temp(i + 1))
-            fc.set_forecast_weather_view(('Mo',
+            next_day = today + timedelta(days=i)
+            fc.set_forecast_weather_view((next_day.strftime("%A")[:2],
                                          icons.get_weather_image(weather.get_forecast_weather_code(i + 1), WEATHER_FORECAST_IMAGE_SIZE),
                                          weather.get_forecast_min_max_temp(i +1)))
 
@@ -274,8 +274,10 @@ class App(customtkinter.CTk):
         self.public_transport.grid(column = 1, row = 0, rowspan = 2, padx = (0, PADDING), pady = (PADDING), sticky = 'nsew')
         #self.public_transport.pack(expand=True, fill='both')
 
+        self.set_update_data()
+
     def set_update_data(self):
-        #self.public_transport.set_transport_entries()
+        self.public_transport.set_transport_entries()
         self.set_weather_panel()
 
     def set_weather_panel(self):
