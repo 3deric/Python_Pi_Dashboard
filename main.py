@@ -44,18 +44,24 @@ class CurrentDayFrame(customtkinter.CTkFrame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        self.current_time = customtkinter.CTkLabel(self, text='Current Time', font= CLOCK_FONT)
+        self.current_time = customtkinter.CTkLabel(self, text='23:59', font= CLOCK_FONT)
         self.current_time.grid(row=0, column=0, sticky='nsew', padx=PADDING_TEXT, pady=(PADDING_TEXT,0))
 
         self.current_day = customtkinter.CTkLabel(self, text='Current Day', font=DEFAULT_FONT)
         self.current_day.grid(row=1, column=0, padx=PADDING_TEXT, pady=(0,PADDING_TEXT))
+
+        self.update()
 
     def update_current_day(self):
         now = datetime.now()
         current_time = str(now.hour) + ':' + str(now.minute).zfill(2)
         current_day = now.strftime("%A") + ' ' + str(now.day) + '. ' + now.strftime("%B") + ', ' + str(now.year)
         self.current_time.configure(text = current_time)
-        self.current_day.configure(text = current_day) #Saturday, March 28, 2026'
+        self.current_day.configure(text = current_day)
+
+    def update(self):
+        self.update_current_day()
+        self.master.after(1000, self.update)
 
 class CurrentWeatherFrame(customtkinter.CTkFrame):
     def __init__(self, master):
@@ -86,6 +92,8 @@ class CurrentWeatherFrame(customtkinter.CTkFrame):
                 fc_seperator.grid(column=i, row=1, sticky='nse', padx=0, pady=0)
             self.weather_forecast.append(fc)
 
+        self.update()
+
     def set_weather_frame(self, weather : weather_data.WeatherData):
         self.current_weather.set_current_weather_view((weather.get_current_temperature(),
                                                       icons.get_weather_image(weather.get_current_weather_code(), WEATHER_DAY_IMAGE_SIZE),
@@ -94,10 +102,15 @@ class CurrentWeatherFrame(customtkinter.CTkFrame):
 
         today = datetime.today()
         for i, fc in enumerate(self.weather_forecast):
-            next_day = today + timedelta(days=i)
+            next_day = today + timedelta(days=i + 1)
             fc.set_forecast_weather_view((next_day.strftime("%A")[:2],
                                          icons.get_weather_image(weather.get_forecast_weather_code(i + 1), WEATHER_FORECAST_IMAGE_SIZE),
                                          weather.get_forecast_min_max_temp(i +1)))
+
+    def update(self):
+        weather.retrieve_data()
+        self.set_weather_frame(weather)
+        self.master.after(1800000 , self.update)
 
 class CurrentWeatherView(customtkinter.CTkFrame):
     def __init__(self, master):
@@ -166,12 +179,16 @@ class PublicTransportFrame(customtkinter.CTkFrame):
                 seperator.grid(sticky='new', padx=0, pady=0)
             self.entries.append(entry)
 
+        self.update()
+
     def set_transport_entries(self):
         vvo.retrieve_stop_data()
-        print('Retrieving VVO Data')
-        print(vvo.get_data())
         for i, e in enumerate(self.entries):
             e.set_transport_entry(vvo.get_data_entry(i))
+
+    def update(self):
+        self.set_transport_entries()
+        self.master.after(60000, self.update)
 
 class TransportEntryFrame(customtkinter.CTkFrame):
     def __init__(self, master, i : int):
@@ -194,7 +211,6 @@ class TransportEntryFrame(customtkinter.CTkFrame):
         self.time_sched.grid(row=1, column=1, sticky='se', padx=0, pady=0)
 
     def set_transport_entry(self, next : tuple):
-        print(next)
         line_dir = (next[1][:TRANSPORT_ENTRY_CUTOFF] + '..') if len(next[1]) > TRANSPORT_ENTRY_CUTOFF else next[1]
         line_time_sched = vvo_data.convert_utc_to_timezone(next[3])
         line_time_real = get_time_delta(vvo_data.convert_utc_to_timezone(next[2]))
@@ -231,9 +247,15 @@ class TabView(customtkinter.CTkTabview):
         self.transport_button = self._segmented_button._buttons_dict['Public Transport']
         self.weather_button = self._segmented_button._buttons_dict['Weather']
         self.calendar_button = self._segmented_button._buttons_dict['Calendar']
+        self._segmented_button.grid(sticky='nsew')
         self.transport_button.configure(font=TAB_FONT, image = self.transport_image, text = 'Public Transport')
         self.weather_button.configure(font=TAB_FONT, image = self.weather_image, text = 'Weather')
         self.calendar_button.configure(font=TAB_FONT, image = self.calendar_image, text = 'Calendar')
+        self._segmented_button.configure(
+            fg_color=customtkinter.ThemeManager.theme["CTkSegmentedButton"]["fg_color"],
+            selected_color=customtkinter.ThemeManager.theme["CTkSegmentedButton"]["selected_color"],
+            unselected_color=customtkinter.ThemeManager.theme["CTkSegmentedButton"]["unselected_color"],
+        )
 
 class Seperator(customtkinter.CTkFrame):
     def __init__(self, master):
@@ -254,45 +276,17 @@ class App(customtkinter.CTk):
         self.current_day = CurrentDayFrame(self)
         self.current_day.grid(column=0, row=0, padx = PADDING, pady= PADDING, sticky='nsew')
 
-        self.current_day.update_current_day()
-
         self.current_weather_frame = CurrentWeatherFrame(self)
         self.current_weather_frame.grid(column=0, row=1, padx = PADDING, pady = (0,PADDING), sticky='nsew')
 
-        #button = CTkButton(self.current_day, command = self.set_update_data, text = 'Update Data')
-        #button.grid(column = 0, row = 2, padx = 20, pady = 20)
+        self.tab_view = TabView(self)
+        self.tab_view.grid(column = 1, row = 0, rowspan = 2, padx = (0, PADDING), pady = (PADDING), sticky = 'nsew')
 
-        #self.tab_view_frame = TabViewFrame(self)
-        #self.tab_view_frame.grid(column = 1, row = 0, rowspan = 2, padx = (0, PADDING), pady = (PADDING), sticky = 'nsew')
+        self.public_transport = PublicTransportFrame(self.tab_view.tab('Public Transport'))
+        self.public_transport.pack(expand=True, fill='both')
+        #self.public_transport = PublicTransportFrame(self)
+        #self.public_transport.grid(column = 1, row = 0, rowspan = 2, padx = (0, PADDING), pady = (PADDING), sticky = 'nsew')
 
-        #self.tab_view = TabView(self.tab_view_frame)
-        #self.tab_view = TabView(self)
-        #self.tab_view.grid(column = 1, row = 0, rowspan = 2, padx = (0, PADDING), pady = (PADDING), sticky = 'nsew')
-
-        #self.public_transport = PublicTransportFrame(self.tab_view.tab('Public Transport'))
-        self.public_transport = PublicTransportFrame(self)
-        self.public_transport.grid(column = 1, row = 0, rowspan = 2, padx = (0, PADDING), pady = (PADDING), sticky = 'nsew')
-        #self.public_transport.pack(expand=True, fill='both')
-
-        self.set_update_data()
-
-    def set_update_data(self):
-        self.public_transport.set_transport_entries()
-        self.set_weather_panel()
-
-    def set_weather_panel(self):
-        weather.retrieve_data()
-
-        self.current_weather_frame.set_weather_frame((weather))
-        # print(f"Current temperature_2m: {weather.get_current_temperature()}")
-        # print(f"Current relative_humidity_2m: {weather.get_current_relative_humidity()}")
-        # print(f"Current weather_code: {weather.get_current_weather_code()}")
-        # print(f"Current wind_speed_10m: {weather.get_current_wind_speed_10m()}")
-        # print(f"Current wind_direction_10m: {weather.get_current_wind_direction_10m()}")
-        # print(f"Current precipitation: {weather.get_current_precipitation()}")
-
-    def set_weather_entries(self):
-        pass
 
 if __name__ == "__main__":
     icons = weather_icons.WeatherIcons()
