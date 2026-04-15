@@ -1,9 +1,4 @@
-import tkinter
-from unittest.mock import DEFAULT
-
 import customtkinter
-from PIL.ImageOps import pad
-from customtkinter import CTkButton
 from PIL import Image
 from datetime import datetime, timedelta
 
@@ -13,7 +8,7 @@ import weather_data
 from vvo_data import get_time_delta
 
 customtkinter.set_appearance_mode('light')
-customtkinter.set_default_color_theme("blue")
+customtkinter.set_default_color_theme("dark-blue")
 
 PADDING = 5
 PADDING_TEXT = 8
@@ -27,7 +22,8 @@ WEATHER_FORECAST_IMAGE_SIZE = 48
 TAB_FONT =('Arial', 20)
 DEP_FONT_BOLD =('Arial', 16, 'bold')
 DEP_FONT_REG =('Arial', 16)
-PUBLIC_TRANSPORT_ENTRIES = 7
+PUBLIC_TRANSPORT_ENTRIES = 8
+WEATHER_FORECAST_ENTRIES = 7
 TRANSPORT_ENTRY_CUTOFF = 25
 STOP_ID = 33000028
 LAT = 51.0509
@@ -171,9 +167,6 @@ class PublicTransportFrame(customtkinter.CTkFrame):
         for i in range(PUBLIC_TRANSPORT_ENTRIES):
             entry = TransportEntryFrame(self, i)
             entry.grid(row = i, column = 0, sticky='nsew', padx=PADDING_TEXT, pady=PADDING_TEXT)
-            #if i < PUBLIC_TRANSPORT_ENTRIES - 1:
-            #    entry.grid(pady = (0, PADDING))
-
             if i < PUBLIC_TRANSPORT_ENTRIES - 1:
                 seperator = Seperator(self)
                 seperator.grid(sticky='new', padx=0, pady=0)
@@ -219,20 +212,56 @@ class TransportEntryFrame(customtkinter.CTkFrame):
         self.time_real.configure(text = line_time_real)
         self.time_sched.configure(text = str(line_time_sched.hour) + ':' + str(line_time_sched.minute).zfill(2))
 
-class TabViewFrame(customtkinter.CTkFrame):
+class WeatherForecastFrame(customtkinter.CTkFrame):
     def __init__(self, master):
-        super().__init__(master, bg_color='transparent', border_width= 1)
+        super().__init__(master, border_width = 1) # , fg_color = 'transparent'
 
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        for i in range(WEATHER_FORECAST_ENTRIES):
+            self.grid_rowconfigure(i, weight=1)
+
+        self.entries = []
+
+        for i in range(WEATHER_FORECAST_ENTRIES):
+            entry = WeatherForecastEntryFrame(self, i)
+            entry.grid(row = i, column = 0, sticky='nsew', padx=PADDING_TEXT, pady=PADDING_TEXT)
+            if i < WEATHER_FORECAST_ENTRIES - 1:
+                 seperator = Seperator(self)
+                 seperator.grid(sticky='new', padx=0, pady=0)
+            self.entries.append(entry)
+
+        self.update()
+
+    def set_transport_entries(self):
+        for i, e in enumerate(self.entries):
+            pass
+           # e.set_transport_entry(vvo.get_data_entry(i))
+
+    def update(self):
+        self.set_transport_entries()
+        self.master.after(1800000, self.update)
+
+class WeatherForecastEntryFrame(customtkinter.CTkFrame):
+    def __init__(self, master, i : int):
+        super().__init__(master, fg_color= 'transparent')
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_propagate(False)
+
+        self.day = customtkinter.CTkLabel(self, text='Day', font=DEP_FONT_BOLD)
+        self.temperature = customtkinter.CTkLabel(self, text='Temperature', font=DEP_FONT_BOLD)
+
+        self.day.grid(row=0, column=0, sticky='nsw', padx =0, pady = 0)
+        self.temperature.grid(row=0, column=1, sticky='nse', padx=0, pady=0)
 
 class TabView(customtkinter.CTkTabview):
     def __init__(self, master, **kwargs):
-        super().__init__(master, **kwargs, bg_color= 'transparent', fg_color= 'transparent')
+        super().__init__(master, **kwargs, bg_color= 'transparent', fg_color= 'transparent', corner_radius=0, border_width=0)
 
-        tab_transport = self.add('Public Transport')
-        tab_weather = self.add('Weather')
-        tab_calendar = self.add('Calendar')
+        self.transport = self.add('Transport')
+        self.weather = self.add('Weather')
+        #self.calendar = self.add('Calendar')
 
         self.transport_image = customtkinter.CTkImage(light_image=Image.open('img/directions_bus_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
                                                     dark_image=Image.open('img/directions_bus_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
@@ -240,17 +269,18 @@ class TabView(customtkinter.CTkTabview):
         self.weather_image = customtkinter.CTkImage(light_image=Image.open('img/cloud_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
                                                     dark_image=Image.open('img/cloud_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
                                                     size=(24, 24))
-        self.calendar_image = customtkinter.CTkImage(light_image=Image.open('img/calendar_month_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
-                                                    dark_image=Image.open('img/calendar_month_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
-                                                    size=(24, 24))
+        #self.calendar_image = customtkinter.CTkImage(light_image=Image.open('img/calendar_month_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
+        #                                            dark_image=Image.open('img/calendar_month_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
+        #                                            size=(24, 24))
 
-        self.transport_button = self._segmented_button._buttons_dict['Public Transport']
+        self.transport_button = self._segmented_button._buttons_dict['Transport']
         self.weather_button = self._segmented_button._buttons_dict['Weather']
-        self.calendar_button = self._segmented_button._buttons_dict['Calendar']
-        self._segmented_button.grid(sticky='nsew')
-        self.transport_button.configure(font=TAB_FONT, image = self.transport_image, text = 'Public Transport')
+        #self.calendar_button = self._segmented_button._buttons_dict['Calendar']
+        self._segmented_button.grid(sticky='nsew', padx = 0, pady = 0)
+        self._segmented_button.configure(corner_radius = 5, border_width = 0)
+        self.transport_button.configure(font=TAB_FONT, image = self.transport_image, text = 'Transport')
         self.weather_button.configure(font=TAB_FONT, image = self.weather_image, text = 'Weather')
-        self.calendar_button.configure(font=TAB_FONT, image = self.calendar_image, text = 'Calendar')
+        #self.calendar_button.configure(font=TAB_FONT, image = self.calendar_image, text = 'Calendar')
         self._segmented_button.configure(
             fg_color=customtkinter.ThemeManager.theme["CTkSegmentedButton"]["fg_color"],
             selected_color=customtkinter.ThemeManager.theme["CTkSegmentedButton"]["selected_color"],
@@ -274,16 +304,19 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(1, weight=10)
 
         self.current_day = CurrentDayFrame(self)
-        self.current_day.grid(column=0, row=0, padx = PADDING, pady= PADDING, sticky='nsew')
+        self.current_day.grid(column=0, row=0, padx = (PADDING,PADDING/2), pady= PADDING, sticky='nsew')
 
         self.current_weather_frame = CurrentWeatherFrame(self)
-        self.current_weather_frame.grid(column=0, row=1, padx = PADDING, pady = (0,PADDING), sticky='nsew')
+        self.current_weather_frame.grid(column=0, row=1, padx = (PADDING,PADDING/2), pady = (0,PADDING), sticky='nsew')
 
         self.tab_view = TabView(self)
-        self.tab_view.grid(column = 1, row = 0, rowspan = 2, padx = (0, PADDING), pady = (PADDING), sticky = 'nsew')
+        self.tab_view.grid(column = 1, row = 0, rowspan = 2, padx = (PADDING/2, PADDING), pady = (0, PADDING), sticky = 'nsew')
 
-        self.public_transport = PublicTransportFrame(self.tab_view.tab('Public Transport'))
-        self.public_transport.pack(expand=True, fill='both')
+        self.public_transport = PublicTransportFrame(self.tab_view.tab('Transport'))
+        self.public_transport.pack(expand=True, fill='both', pady = (PADDING,0))
+
+        self.weather_forecast = WeatherForecastFrame(self.tab_view.tab('Weather'))
+        self.weather_forecast.pack(expand=True, fill='both', pady = (PADDING,0))
         #self.public_transport = PublicTransportFrame(self)
         #self.public_transport.grid(column = 1, row = 0, rowspan = 2, padx = (0, PADDING), pady = (PADDING), sticky = 'nsew')
 
