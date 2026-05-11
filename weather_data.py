@@ -81,22 +81,22 @@ class WeatherData():
 		return str(self.current_weather_code)
 
 	def get_current_wind_speed_10m(self) -> string:
-		return str(int(self.current_wind_speed_10m)) + ' m/s'
+		return '༄ ' + str(int(self.current_wind_speed_10m)) + ' m/s'
 
 	def get_current_wind_direction_10m(self) -> string:
-		return self.current_wind_direction_10m
+		return str(self.current_wind_direction_10m)
 
 	def get_current_precipitation(self) -> string:
-		return str(int(self.current_precipitation)) + ' %'
+		return '☂ ' + str(int(self.current_precipitation)) + ' %'
 
 	def get_current_min_max_temp(self) -> string:
-		return str(round(self.daily_dataframe['temperature_2m_min'][0],1)) + ' °C to ' + str(round(self.daily_dataframe['temperature_2m_max'][0],1)) + ' °C'
+		return str(round(self.daily_dataframe['temperature_2m_min'][0])) + ' °C / ' + str(round(self.daily_dataframe['temperature_2m_max'][0])) + ' °C'
 
 	def get_forecast_weather_code(self, day : int) -> string:
 		return str(int(self.daily_dataframe['weather_code'][day]))
 
 	def get_forecast_min_max_temp(self, day : int) -> tuple():
-		return (str(round(self.daily_dataframe['temperature_2m_min'][day], 1)) + ' °C', str(round(self.daily_dataframe['temperature_2m_max'][day],1)) + ' °C')
+		return (str(round(self.daily_dataframe['temperature_2m_min'][day])) + ' °C', str(round(self.daily_dataframe['temperature_2m_max'][day])) + ' °C')
 
 	def get_forecast_wind_speed_10m(self, day : int) -> str:
 		return str(int(self.daily_dataframe['wind_speed_10m'][day])) + ' m/s'

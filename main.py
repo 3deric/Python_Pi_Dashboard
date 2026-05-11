@@ -19,6 +19,7 @@ WEATHER_FORECAST_IMAGE_SIZE = 48
 TAB_FONT =('Arial', 20)
 FORECAST_FONT_BOLD =('Arial', 16, 'bold')
 FORECAST_FONT_REG =('Arial', 16)
+FORECAST_FONT_LIGHT =('Arial', 10)
 PUBLIC_TRANSPORT_ENTRIES = 7
 WEATHER_FORECAST_ENTRIES = 7
 TRANSPORT_ENTRY_CUTOFF = 25
@@ -95,7 +96,7 @@ class CurrentWeatherFrame(customtkinter.CTkFrame):
         self.current_weather.set_current_weather_view((weather.get_current_temperature(),
                                                       icons.get_weather_image(weather.get_current_weather_code(), WEATHER_DAY_IMAGE_SIZE),
                                                       weather.get_current_min_max_temp(),
-                                                      weather.get_current_relative_humidity()))
+                                                      weather.get_current_precipitation()))
 
         today = datetime.today()
         for i, fc in enumerate(self.weather_forecast):
@@ -119,8 +120,8 @@ class CurrentWeatherView(customtkinter.CTkFrame):
 
         self.current_temp = customtkinter.CTkLabel(self, text='-30 °C', font=WEATHER_FONT)
         self.current_icon = customtkinter.CTkLabel(self, text='', image = icons.get_weather_image('3', WEATHER_DAY_IMAGE_SIZE), font=WEATHER_FONT)
-        self.today_temps = customtkinter.CTkLabel(self, text = '10.1 to 15.1 °C', font = DEFAULT_FONT)
-        self.current_humidity = customtkinter.CTkLabel(self, text = '70 % rH', font = DEFAULT_FONT)
+        self.today_temps = customtkinter.CTkLabel(self, text = '10.1 / 15.1 °C', font = DEFAULT_FONT)
+        self.current_humidity = customtkinter.CTkLabel(self, text = '☂ 70 %', font = DEFAULT_FONT)
 
         self.current_temp.grid(row=0, column=0, sticky='nw', padx=PADDING_TEXT, pady=PADDING_TEXT)
         self.current_icon.grid(row=0, column=1, sticky='ne', padx=0, pady=0)
@@ -255,14 +256,14 @@ class WeatherForecastEntryFrame(customtkinter.CTkFrame):
         self.grid_columnconfigure(4, weight=1)
         self.grid_propagate(False)
 
-        self.day = customtkinter.CTkLabel(self, text='Today', font=FORECAST_FONT_BOLD)
-        self.day_date = customtkinter.CTkLabel(self, text='May 11', font=FORECAST_FONT_REG)
+        self.day = customtkinter.CTkLabel(self, text='Thursday', font=FORECAST_FONT_BOLD)
+        self.day_date = customtkinter.CTkLabel(self, text='December 31', font=FORECAST_FONT_REG)
         self.current_icon = customtkinter.CTkLabel(self, text='',
                                                    image=icons.get_weather_image('3', WEATHER_FORECAST_IMAGE_SIZE),
                                                    font=WEATHER_FONT)
-        self.temp = customtkinter.CTkLabel(self, text='13 °C - 21 °C', font=FORECAST_FONT_BOLD)
+        self.temp = customtkinter.CTkLabel(self, text='13 °C / 21 °C', font=FORECAST_FONT_BOLD)
         self.wind = customtkinter.CTkLabel(self, text='༄ 20 Km/h', font=FORECAST_FONT_REG)
-        #self.wind_dir = customtkinter.CTkLabel(self, text='NW', font=FORECAST_FONT_REG)
+        #self.wind_dir = customtkinter.CTkLabel(self, text='NW', font = FORECAST_FONT_LIGHT)
         #self.humidity = customtkinter.CTkLabel(self, text='💧 40 %', font=FORECAST_FONT_BOLD)
         self.rain = customtkinter.CTkLabel(self, text='☂ 50 %', font=FORECAST_FONT_REG)
 
@@ -270,13 +271,18 @@ class WeatherForecastEntryFrame(customtkinter.CTkFrame):
         self.day_date.grid(row = 1, column = 0, sticky='nsw', padx =0, pady = 0)
         self.current_icon.grid(column = 1, row = 0, columnspan =1, rowspan= 2, sticky = 'nsew', padx =0, pady = 0)
         self.temp.grid(column = 2, row = 0, columnspan =1, rowspan= 2, sticky = 'nsew', padx =0, pady = 0)
-        self.wind.grid(row=0, column=3, rowspan = 2, sticky='nsw', padx=0, pady=0)
-        #self.wind_dir.grid(row=1, column=3, sticky='nsw', padx=0, pady=0)
+        self.wind.grid(row=0, column=3, rowspan = 2, sticky='nsew', padx=0, pady=0)
+        #self.wind_dir.grid(row=1, column=3, sticky='nw', padx=0, pady=0)
         #self.humidity.grid(column = 4, row = 0, columnspan =1, rowspan= 2, sticky = 'nsew', padx =0, pady = 0)
         self.rain.grid(column = 4, row = 0, columnspan =1, rowspan= 2, sticky = 'nsew', padx =0, pady = 0)
 
     def set_weather_forecast_entry(self, next : tuple):
-        self.day
+        self.day.configure(text=next[0])
+        self.day_date.configure(text=next[0])
+        self.current_icon.configure(image=next[1])
+        self.temp.configure(text=next[2])
+        self.wind.configure(text='༄ ' + next[3])
+        self.rain.configure(text='☂ ' + next[4])
 
 class TabView(customtkinter.CTkTabview):
     def __init__(self, master, **kwargs):
