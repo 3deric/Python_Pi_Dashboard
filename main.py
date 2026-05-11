@@ -17,8 +17,8 @@ WEATHER_DAY_FONT = ('Arial', 20, 'bold')
 WEATHER_DAY_IMAGE_SIZE = 96
 WEATHER_FORECAST_IMAGE_SIZE = 48
 TAB_FONT =('Arial', 20)
-DEP_FONT_BOLD =('Arial', 16, 'bold')
-DEP_FONT_REG =('Arial', 16)
+FORECAST_FONT_BOLD =('Arial', 16, 'bold')
+FORECAST_FONT_REG =('Arial', 16)
 PUBLIC_TRANSPORT_ENTRIES = 7
 WEATHER_FORECAST_ENTRIES = 7
 TRANSPORT_ENTRY_CUTOFF = 25
@@ -194,10 +194,10 @@ class TransportEntryFrame(customtkinter.CTkFrame):
         self.grid_rowconfigure(1, weight=1)
         self.grid_propagate(False)
 
-        self.line = customtkinter.CTkLabel(self, text='Line', font=DEP_FONT_BOLD)
-        self.state = customtkinter.CTkLabel(self, text='State', font=DEP_FONT_REG)
-        self.time_real= customtkinter.CTkLabel(self, text='Delta Time', font=DEP_FONT_BOLD)
-        self.time_sched = customtkinter.CTkLabel(self, text='Scheduled Time', font=DEP_FONT_REG)
+        self.line = customtkinter.CTkLabel(self, text='Line', font=FORECAST_FONT_BOLD)
+        self.state = customtkinter.CTkLabel(self, text='State', font=FORECAST_FONT_REG)
+        self.time_real= customtkinter.CTkLabel(self, text='Delta Time', font=FORECAST_FONT_BOLD)
+        self.time_sched = customtkinter.CTkLabel(self, text='Scheduled Time', font=FORECAST_FONT_REG)
 
         self.line.grid(row=0, column=0, sticky='nw', padx =0, pady = 0)
         self.state.grid(row=1, column=0, sticky='sw', padx=0, pady=0)
@@ -246,15 +246,39 @@ class WeatherForecastEntryFrame(customtkinter.CTkFrame):
     def __init__(self, master, i : int):
         super().__init__(master, fg_color= 'transparent')
 
-        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight = 1)
+        self.grid_rowconfigure(1, weight = 1)
+        self.grid_columnconfigure(0, weight=2)
         self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=2)
+        self.grid_columnconfigure(3, weight=1)
+        self.grid_columnconfigure(4, weight=1)
         self.grid_propagate(False)
 
-        self.day = customtkinter.CTkLabel(self, text='Day', font=DEP_FONT_BOLD)
-        self.temperature = customtkinter.CTkLabel(self, text='Temperature', font=DEP_FONT_BOLD)
+        self.day = customtkinter.CTkLabel(self, text='Today', font=FORECAST_FONT_BOLD)
+        self.day_date = customtkinter.CTkLabel(self, text='May 11', font=FORECAST_FONT_REG)
+        self.current_icon = customtkinter.CTkLabel(self, text='',
+                                                   image=icons.get_weather_image('3', WEATHER_FORECAST_IMAGE_SIZE),
+                                                   font=WEATHER_FONT)
+        self.day_seperator = Seperator(self)
+        self.temp = customtkinter.CTkLabel(self, text='13 °C - 21 °C', font=FORECAST_FONT_BOLD)
+        self.temp_seperator = Seperator(self)
+        self.wind = customtkinter.CTkLabel(self, text='༄ 20 Km/h', font=FORECAST_FONT_REG)
+        #self.wind_dir = customtkinter.CTkLabel(self, text='NW', font=FORECAST_FONT_REG)
+        self.wind_seperator = Seperator(self)
+        #self.humidity = customtkinter.CTkLabel(self, text='💧 40 %', font=FORECAST_FONT_BOLD)
+        self.rain = customtkinter.CTkLabel(self, text='☂ 50 %', font=FORECAST_FONT_REG)
 
-        self.day.grid(row=0, column=0, sticky='nsw', padx =0, pady = 0)
-        self.temperature.grid(row=0, column=1, sticky='nse', padx=0, pady=0)
+        self.day.grid(row = 0, column = 0, sticky='nsw', padx =0, pady = 0)
+        self.day_date.grid(row = 1, column = 0, sticky='nsw', padx =0, pady = 0)
+        self.current_icon.grid(column = 1, row = 0, columnspan =1, rowspan= 2, sticky = 'nsew', padx =0, pady = 0)
+        #self.day_seperator.grid(column = 1, row=0, sticky='nse' ,rowspan = 2, padx=0, pady=0)
+        self.temp.grid(column = 2, row = 0, columnspan =1, rowspan= 2, sticky = 'nsew', padx =0, pady = 0)
+        self.wind.grid(row=0, column=3, rowspan = 2, sticky='nsw', padx=0, pady=0)
+        #self.wind_dir.grid(row=1, column=3, sticky='nsw', padx=0, pady=0)
+        #self.humidity.grid(column = 4, row = 0, columnspan =1, rowspan= 2, sticky = 'nsew', padx =0, pady = 0)
+        self.rain.grid(column = 4, row = 0, columnspan =1, rowspan= 2, sticky = 'nsew', padx =0, pady = 0)
+
 
 class TabView(customtkinter.CTkTabview):
     def __init__(self, master, **kwargs):
