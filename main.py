@@ -248,9 +248,9 @@ class WeatherForecastEntryFrame(customtkinter.CTkFrame):
 
         self.grid_rowconfigure(0, weight = 1)
         self.grid_rowconfigure(1, weight = 1)
-        self.grid_columnconfigure(0, weight=2)
+        self.grid_columnconfigure(0, weight=4)
         self.grid_columnconfigure(1, weight=1)
-        self.grid_columnconfigure(2, weight=2)
+        self.grid_columnconfigure(2, weight=4)
         self.grid_columnconfigure(3, weight=1)
         self.grid_columnconfigure(4, weight=1)
         self.grid_propagate(False)
@@ -260,25 +260,23 @@ class WeatherForecastEntryFrame(customtkinter.CTkFrame):
         self.current_icon = customtkinter.CTkLabel(self, text='',
                                                    image=icons.get_weather_image('3', WEATHER_FORECAST_IMAGE_SIZE),
                                                    font=WEATHER_FONT)
-        self.day_seperator = Seperator(self)
         self.temp = customtkinter.CTkLabel(self, text='13 °C - 21 °C', font=FORECAST_FONT_BOLD)
-        self.temp_seperator = Seperator(self)
         self.wind = customtkinter.CTkLabel(self, text='༄ 20 Km/h', font=FORECAST_FONT_REG)
         #self.wind_dir = customtkinter.CTkLabel(self, text='NW', font=FORECAST_FONT_REG)
-        self.wind_seperator = Seperator(self)
         #self.humidity = customtkinter.CTkLabel(self, text='💧 40 %', font=FORECAST_FONT_BOLD)
         self.rain = customtkinter.CTkLabel(self, text='☂ 50 %', font=FORECAST_FONT_REG)
 
         self.day.grid(row = 0, column = 0, sticky='nsw', padx =0, pady = 0)
         self.day_date.grid(row = 1, column = 0, sticky='nsw', padx =0, pady = 0)
         self.current_icon.grid(column = 1, row = 0, columnspan =1, rowspan= 2, sticky = 'nsew', padx =0, pady = 0)
-        #self.day_seperator.grid(column = 1, row=0, sticky='nse' ,rowspan = 2, padx=0, pady=0)
         self.temp.grid(column = 2, row = 0, columnspan =1, rowspan= 2, sticky = 'nsew', padx =0, pady = 0)
         self.wind.grid(row=0, column=3, rowspan = 2, sticky='nsw', padx=0, pady=0)
         #self.wind_dir.grid(row=1, column=3, sticky='nsw', padx=0, pady=0)
         #self.humidity.grid(column = 4, row = 0, columnspan =1, rowspan= 2, sticky = 'nsew', padx =0, pady = 0)
         self.rain.grid(column = 4, row = 0, columnspan =1, rowspan= 2, sticky = 'nsew', padx =0, pady = 0)
 
+    def set_weather_forecast_entry(self, next : tuple):
+        self.day
 
 class TabView(customtkinter.CTkTabview):
     def __init__(self, master, **kwargs):
@@ -322,6 +320,7 @@ class App(customtkinter.CTk):
 
         self.title('Pi Dashboard')
         self.geometry('800x480')
+        self.attributes('-fullscreen', False) #Enable dashboard fullscreen mode
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=3)
 
