@@ -72,7 +72,7 @@ class WeatherData():
 		self.daily_dataframe = pd.DataFrame(data = daily_data)
 
 	def get_current_temperature(self) -> string:
-		return str(int(self.current_temperature_2m)) + ' °C'
+		return str(round(self.current_temperature_2m)) + ' °C'
 
 	def get_current_relative_humidity(self) -> string:
 		return str(int(self.current_relative_humidity_2m)) + ' % rH'
@@ -90,13 +90,13 @@ class WeatherData():
 		return str(int(self.current_precipitation)) + ' %'
 
 	def get_current_min_max_temp(self) -> string:
-		return str(int(self.daily_dataframe['temperature_2m_min'][0])) + ' °C to ' + str(int(self.daily_dataframe['temperature_2m_max'][0])) + ' °C'
+		return str(round(self.daily_dataframe['temperature_2m_min'][0],1)) + ' °C to ' + str(round(self.daily_dataframe['temperature_2m_max'][0],1)) + ' °C'
 
 	def get_forecast_weather_code(self, day : int) -> string:
 		return str(int(self.daily_dataframe['weather_code'][day]))
 
 	def get_forecast_min_max_temp(self, day : int) -> tuple():
-		return (str(int(self.daily_dataframe['temperature_2m_min'][day])) + ' °C', str(int(self.daily_dataframe['temperature_2m_max'][day])) + ' °C')
+		return (str(round(self.daily_dataframe['temperature_2m_min'][day], 1)) + ' °C', str(round(self.daily_dataframe['temperature_2m_max'][day],1)) + ' °C')
 
 	def get_forecast_wind_speed_10m(self, day : int) -> str:
 		return str(int(self.daily_dataframe['wind_speed_10m'][day])) + ' m/s'

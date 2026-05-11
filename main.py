@@ -7,9 +7,6 @@ import vvo_data
 import weather_data
 from vvo_data import get_time_delta
 
-customtkinter.set_appearance_mode('light')
-customtkinter.set_default_color_theme("dark-blue")
-
 PADDING = 5
 PADDING_TEXT = 8
 DEFAULT_FONT = ('Arial', 16)
@@ -22,7 +19,7 @@ WEATHER_FORECAST_IMAGE_SIZE = 48
 TAB_FONT =('Arial', 20)
 DEP_FONT_BOLD =('Arial', 16, 'bold')
 DEP_FONT_REG =('Arial', 16)
-PUBLIC_TRANSPORT_ENTRIES = 8
+PUBLIC_TRANSPORT_ENTRIES = 7
 WEATHER_FORECAST_ENTRIES = 7
 TRANSPORT_ENTRY_CUTOFF = 25
 STOP_ID = 33000028
@@ -33,7 +30,11 @@ icons = None
 
 class CurrentDayFrame(customtkinter.CTkFrame):
     def __init__(self, master):
-        super().__init__(master, border_width= 1)
+        super().__init__(master, border_width = 1,
+                         width=100,
+                         height=120)
+
+        self.grid_propagate(False)
 
         self.grid_columnconfigure(0, weight=1)
 
@@ -116,9 +117,9 @@ class CurrentWeatherView(customtkinter.CTkFrame):
         self.grid_rowconfigure(0, weight = 5)
         self.grid_rowconfigure(1, weight=1)
 
-        self.current_temp = customtkinter.CTkLabel(self, text='10°C', font=WEATHER_FONT)
+        self.current_temp = customtkinter.CTkLabel(self, text='-30 °C', font=WEATHER_FONT)
         self.current_icon = customtkinter.CTkLabel(self, text='', image = icons.get_weather_image('3', WEATHER_DAY_IMAGE_SIZE), font=WEATHER_FONT)
-        self.today_temps = customtkinter.CTkLabel(self, text = '10 to 15 °C', font = DEFAULT_FONT)
+        self.today_temps = customtkinter.CTkLabel(self, text = '10.1 to 15.1 °C', font = DEFAULT_FONT)
         self.current_humidity = customtkinter.CTkLabel(self, text = '70 % rH', font = DEFAULT_FONT)
 
         self.current_temp.grid(row=0, column=0, sticky='nw', padx=PADDING_TEXT, pady=PADDING_TEXT)
@@ -143,7 +144,7 @@ class WeatherForecastView(customtkinter.CTkFrame):
 
         self.fc_day = customtkinter.CTkLabel(self, text='Mo', font=WEATHER_DAY_FONT)
         self.fc_icon = customtkinter.CTkLabel(self, text='', image = icons.get_weather_image('3', WEATHER_FORECAST_IMAGE_SIZE) ,font=DEFAULT_FONT)
-        self.fc_range = customtkinter.CTkLabel(self, text='10 °C\n-\n16 °C', font=DEFAULT_FONT)
+        self.fc_range = customtkinter.CTkLabel(self, text='10.5 °C\n-\n16.5 °C', font=DEFAULT_FONT)
 
         self.fc_day.grid(row=0, column=0, sticky='ew', padx=PADDING_TEXT, pady=(PADDING_TEXT,0))
         self.fc_icon.grid(row=1, column=0, sticky='ew', padx=0, pady=0)
@@ -152,7 +153,7 @@ class WeatherForecastView(customtkinter.CTkFrame):
     def set_forecast_weather_view(self, next):
         self.fc_day.configure(text = next[0])
         self.fc_icon.configure(text= '', image = next[1])
-        self.fc_range.configure(text = next[2][0] + '\nto\n' + next[2][1])
+        self.fc_range.configure(text = next[2][0] + '\n-\n' + next[2][1])
 
 class PublicTransportFrame(customtkinter.CTkFrame):
     def __init__(self, master):
@@ -277,7 +278,7 @@ class TabView(customtkinter.CTkTabview):
         self.weather_button = self._segmented_button._buttons_dict['Weather']
         #self.calendar_button = self._segmented_button._buttons_dict['Calendar']
         self._segmented_button.grid(sticky='nsew', padx = 0, pady = 0)
-        self._segmented_button.configure(corner_radius = 5, border_width = 0)
+        self._segmented_button.configure(corner_radius = 5, border_width = 1)
         self.transport_button.configure(font=TAB_FONT, image = self.transport_image, text = 'Transport')
         self.weather_button.configure(font=TAB_FONT, image = self.weather_image, text = 'Weather')
         #self.calendar_button.configure(font=TAB_FONT, image = self.calendar_image, text = 'Calendar')
@@ -325,6 +326,8 @@ if __name__ == "__main__":
     icons = weather_icons.WeatherIcons()
     vvo = vvo_data.VVOData(STOP_ID)
     weather = weather_data.WeatherData(LAT, LONG)
+    customtkinter.set_appearance_mode('light')
+    customtkinter.set_default_color_theme("blue")
     app = App()
     app.mainloop()
 
