@@ -105,7 +105,7 @@ class CurrentWeatherView(customtkinter.CTkFrame):
         self.current_temp = customtkinter.CTkLabel(self, text='-30 °C', font=style.WEATHER_FONT)
         self.current_icon = customtkinter.CTkLabel(self, text='', image = icons.get_weather_image('3', style.WEATHER_DAY_IMAGE_SIZE), font=style.WEATHER_FONT)
         self.today_temps = customtkinter.CTkLabel(self, text = '10.1 / 15.1 °C', font = style.DEFAULT_FONT)
-        self.current_rain_propability = customtkinter.CTkLabel(self, text = '☂ 70 %', font = style.DEFAULT_FONT)
+        self.current_rain_propability = customtkinter.CTkLabel(self, text = '☔ 70 %', font = style.DEFAULT_FONT)
 
         self.current_temp.grid(row=0, column=0, sticky='nw', padx=style.PADDING_TEXT, pady=style.PADDING_TEXT)
         self.current_icon.grid(row=0, column=1, sticky='ne', padx=0, pady=0)
@@ -241,7 +241,7 @@ class WeatherForecastEntryFrame(customtkinter.CTkFrame):
 
         self.grid_rowconfigure(0, weight = 1)
         self.grid_rowconfigure(1, weight = 1)
-        for i, weight in enumerate((1, 1, 1, 1, 1)):
+        for i, weight in enumerate((2, 2, 3, 2, 2)):
             self.grid_columnconfigure(i, weight=weight, uniform="forecast")
         self.grid_propagate(False)
 
@@ -278,8 +278,8 @@ class WeatherForecastEntryFrame(customtkinter.CTkFrame):
         self.day_date.configure(text=next[1])
         self.current_icon.configure(image=next[2])
         self.temp.configure(text=next[3][0] + ' / ' + next[3][1])
-        self.wind.configure(text='🌫 ' + next[4])
-        self.rain.configure(text='☂ ' + next[5])
+        self.wind.configure(text='🍃 ' + next[4])
+        self.rain.configure(text='☔ ' + next[5])
 
 class TabView(customtkinter.CTkTabview):
     def __init__(self, master, **kwargs):
@@ -323,7 +323,12 @@ class App(customtkinter.CTk):
 
         self.title('Pi Dashboard')
         self.geometry('800x480')
-        self.attributes('-fullscreen', False) #Enable dashboard fullscreen mode
+        self.fullscreen_state = False
+
+
+        self.bind("<F11>", self.toggle_fullscreen)
+        self.bind("<Escape>", self.end_fullscreen)
+
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=3)
 
@@ -347,6 +352,15 @@ class App(customtkinter.CTk):
         #self.public_transport = PublicTransportFrame(self)
         #self.public_transport.grid(column = 1, row = 0, rowspan = 2, padx = (0, style.PADDING), pady = (style.PADDING), sticky = 'nsew')
 
+    def toggle_fullscreen(self, event=None):
+        self.fullscreen_state = not self.fullscreen_state  # Just toggling the boolean
+        self.attributes('-fullscreen', self.fullscreen_state)
+        return "break"
+
+    def end_fullscreen(self, event=None):
+        self.fullscreen_state = False
+        self.attributes('-fullscreen', self.fullscreen_state)
+        return "break"
 
 if __name__ == "__main__":
     icons = weather_icons.WeatherIcons()
