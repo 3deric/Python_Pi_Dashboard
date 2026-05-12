@@ -25,12 +25,23 @@ class WeatherIcons():
         image_day = Image.open(BytesIO(img_data_day))
         image_night = Image.open(BytesIO(img_data_night))
 
+        image_day = crop_image(image_day, 10)
+        image_night = crop_image(image_night, 10)
+
         ctk_image = customtkinter.CTkImage(
             light_image=image_day,
             dark_image=image_night,
             size=(res, res))
 
         return ctk_image
+
+def crop_image(image : Image.Image, crop) -> Image.Image:
+    w, h = image.size
+    left = crop
+    right = w - crop
+    upper = crop
+    lower = h-crop
+    return image.crop((left, upper, right, lower))
 
 if __name__ == "__main__":
     weather_icons = WeatherIcons()

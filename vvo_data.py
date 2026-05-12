@@ -28,9 +28,24 @@ class VVOData():
             "HailedSharedTaxi"
             ]
         }
-        response = requests.post(url, json = attributes)
-        result = response.json()
-        self.data = result
+        try:
+            response = requests.post(url,json=attributes,timeout=5)
+            response.raise_for_status()
+            self.data = response.json()
+
+        except requests.exceptions.ConnectionError:
+            print("No internet connection.")
+
+        except requests.exceptions.Timeout:
+            print("Request timed out.")
+
+        except requests.exceptions.HTTPError as e:
+            print(f"HTTP error: {e}")
+
+        except requests.exceptions.RequestException as e:
+            # catches all other requests-related errors
+            print(f"Request failed: {e}")
+
 
     def get_data_value(self, i : int,  key : str) -> str:
         try:

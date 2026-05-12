@@ -25,7 +25,7 @@ class WeatherData():
 			"daily": ["weather_code", "temperature_2m_max", "temperature_2m_min", "precipitation_probability_max",
 					  "wind_speed_10m_max"],
 			"current": ["temperature_2m", "relative_humidity_2m", "weather_code", "wind_speed_10m",
-						"wind_direction_10m", "precipitation"],
+						"wind_direction_10m", "precipitation_probability"],
 			"timezone": "Europe/Berlin",
 		}
 		
@@ -33,11 +33,11 @@ class WeatherData():
 		responses = self.openmeteo.weather_api(self.url, params=self.params)
 		# Process first location. Add a for-loop for multiple locations or weather models
 		response = responses[0]
-		print(response.Current().Variables(0).Value())
-		print(f"Coordinates: {response.Latitude()}°N {response.Longitude()}°E")
-		print(f"Elevation: {response.Elevation()} m asl")
-		print(f"Timezone: {response.Timezone()}{response.TimezoneAbbreviation()}")
-		print(f"Timezone difference to GMT+0: {response.UtcOffsetSeconds()}s")
+		# print(response.Current().Variables(0).Value())
+		# print(f"Coordinates: {response.Latitude()}°N {response.Longitude()}°E")
+		# print(f"Elevation: {response.Elevation()} m asl")
+		# print(f"Timezone: {response.Timezone()}{response.TimezoneAbbreviation()}")
+		# print(f"Timezone difference to GMT+0: {response.UtcOffsetSeconds()}s")
 
 		# Process current data. The order of variables needs to be the same as requested.
 		current = response.Current()
@@ -46,7 +46,7 @@ class WeatherData():
 		self.current_weather_code = str(int(current.Variables(2).Value()))
 		self.current_wind_speed_10m = current.Variables(3).Value()
 		self.current_wind_direction_10m = current.Variables(4).Value()
-		self.current_precipitation = current.Variables(5).Value()
+		self.current_precipitation_propability = current.Variables(5).Value()
 
 		# Process daily data. The order of variables needs to be the same as requested.
 		daily = response.Daily()
@@ -81,13 +81,13 @@ class WeatherData():
 		return str(self.current_weather_code)
 
 	def get_current_wind_speed_10m(self) -> string:
-		return '༄ ' + str(int(self.current_wind_speed_10m)) + ' m/s'
+		return str(int(self.current_wind_speed_10m)) + ' m/s'
 
 	def get_current_wind_direction_10m(self) -> string:
 		return str(self.current_wind_direction_10m)
 
-	def get_current_precipitation(self) -> string:
-		return '☂ ' + str(int(self.current_precipitation)) + ' %'
+	def get_current_precipitation_propability(self) -> string:
+		return str(int(self.current_precipitation_propability)) + ' %'
 
 	def get_current_min_max_temp(self) -> string:
 		return str(round(self.daily_dataframe['temperature_2m_min'][0])) + ' °C / ' + str(round(self.daily_dataframe['temperature_2m_max'][0])) + ' °C'
@@ -99,23 +99,24 @@ class WeatherData():
 		return (str(round(self.daily_dataframe['temperature_2m_min'][day])) + ' °C', str(round(self.daily_dataframe['temperature_2m_max'][day])) + ' °C')
 
 	def get_forecast_wind_speed_10m(self, day : int) -> str:
-		return str(int(self.daily_dataframe['wind_speed_10m'][day])) + ' m/s'
+		return str(int(self.daily_dataframe['wind_speed_10m_max'][day])) + ' m/s'
 
-	def get_forecast_precipitation(self, day : int) -> string:
+	def get_forecast_precipitation_propability(self, day : int) -> string:
 		return str(int(self.daily_dataframe['precipitation_probability_max'][day])) + ' %'
 
 if __name__ == "__main__":
 	weather = WeatherData(51.0509,13.7383)
 	weather.retrieve_data()
 
-	print(weather.get_forecast_min_max_temp(1))
+	print(weather.get_current_temperature())
+	print(weather.get_current_relative_humidity())
+	print(weather.get_current_weather_code())
+	print(weather.get_current_wind_speed_10m())
+	print(weather.get_current_wind_direction_10m())
+	print(weather.get_forecast_precipitation_propability(0))
 
-	# print(weather.daily_weather_code)
-	#
-	# print(f"Current temperature_2m: {weather.get_current_temperature()}")
-	# print(f"Current relative_humidity_2m: {weather.get_current_relative_humidity()}")
-	# print(f"Current weather_code: {weather.get_current_weather_code()}")
-	# print(f"Current wind_speed_10m: {weather.get_current_wind_speed_10m()}")
-	# print(f"Current wind_direction_10m: {weather.get_current_wind_direction_10m()}")
-	# print(f"Current precipitation: {weather.get_current_precipitation()}")
-
+	for i in range(0,7):
+		print(weather.get_forecast_min_max_temp(i))
+		print(weather.get_forecast_weather_code(i))
+		print(weather.get_forecast_wind_speed_10m(i))
+		print(weather.get_forecast_precipitation_propability(i))
