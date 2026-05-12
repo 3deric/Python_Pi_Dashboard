@@ -1,2 +1,5 @@
 # Python_Pi_Dashboard
-Second version of my raspberry pi dashboard, this time with NiceGUI in Python
+
+![Python Dashboard Preview](/preview.png)
+
+Second version of my raspberry pi dashboard. A desktop application made with custom tkinter.
