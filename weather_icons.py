@@ -9,21 +9,58 @@ class WeatherIcons():
 
     def retreive_weather_icons(self) -> dict:
         url = "https://gist.githubusercontent.com/stellasphere/9490c195ed2b53c707087c8c2db4ec0c/raw/76b0cb0ef0bfd8a2ec988aa54e30ecd1b483495d/descriptions.json"
-        response = requests.get(url)
-        return response.json()
+
+        response = {}
+
+        try:
+            response = requests.get(url, timeout=10)
+
+        except requests.exceptions.ConnectionError:
+            print("No internet connection.")
+
+        except requests.exceptions.Timeout:
+            print("Request timed out.")
+
+        except requests.exceptions.HTTPError as e:
+            print(f"HTTP error: {e}")
+
+        except requests.exceptions.RequestException as e:
+            # catches all other requests-related errors
+            print(f"Request failed: {e}")
+        response = response.json()
+        icons = {}
+        for code in response:
+            img_day = self.download_weather_image(response, code, 'day')
+            img_night = self.download_weather_image(response, code, 'night')
+            icons[code] = [img_day, img_night]
+        return icons
 
     def get_data(self):
         return self.icons
 
+    def download_weather_image(self, data : {}, code : str, time: str) -> Image.Image:
+        url = data[code][time]['image']
+        try:
+            response = requests.get(url, timeout=10)
+            img_data = response.content
+            return Image.open(BytesIO(img_data))
+
+        except requests.exceptions.ConnectionError:
+            print("No internet connection.")
+
+        except requests.exceptions.Timeout:
+            print("Request timed out.")
+
+        except requests.exceptions.HTTPError as e:
+            print(f"HTTP error: {e}")
+
+        except requests.exceptions.RequestException as e:
+            # catches all other requests-related errors
+            print(f"Request failed: {e}")
+
     def get_weather_image(self, code : str, res : int = 64) -> customtkinter.CTkImage:
-        url_day = self.icons[code]['day']['image']
-        url_night = self.icons[code]['night']['image']
-        response_day = requests.get(url_day)
-        response_night = requests.get(url_night)
-        img_data_day = response_day.content
-        img_data_night = response_night.content
-        image_day = Image.open(BytesIO(img_data_day))
-        image_night = Image.open(BytesIO(img_data_night))
+        image_day = self.icons[code][0]
+        image_night = self.icons[code][1]
 
         image_day = crop_image(image_day, 10)
         image_night = crop_image(image_night, 10)
@@ -45,6 +82,6 @@ def crop_image(image : Image.Image, crop) -> Image.Image:
 
 if __name__ == "__main__":
     weather_icons = WeatherIcons()
-    # icons = weather_icons.get_data()
-    # for code in icons:
-    #     print(weather_icons.get_weather_image(str(code)))
+    icons = weather_icons.get_data()
+    weather_image = weather_icons.get_weather_image('95', 64)
+    print(weather_image)
