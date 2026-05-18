@@ -1,6 +1,7 @@
 import requests
 import customtkinter as customtkinter
 from PIL import Image
+from datetime import datetime
 from io import BytesIO
 
 class WeatherIcons():
@@ -65,6 +66,11 @@ class WeatherIcons():
         image_day = crop_image(image_day, 10)
         image_night = crop_image(image_night, 10)
 
+        if is_daytime():
+            image_night = image_day
+        else:
+            image_day = image_night
+
         ctk_image = customtkinter.CTkImage(
             light_image=image_day,
             dark_image=image_night,
@@ -79,6 +85,10 @@ def crop_image(image : Image.Image, crop) -> Image.Image:
     upper = crop
     lower = h-crop
     return image.crop((left, upper, right, lower))
+
+def is_daytime():
+    current_hour = datetime.now().hour
+    return 6 <= current_hour < 20
 
 if __name__ == "__main__":
     weather_icons = WeatherIcons()
