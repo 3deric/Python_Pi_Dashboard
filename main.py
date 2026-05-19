@@ -226,7 +226,7 @@ class WeatherForecastFrame(customtkinter.CTkFrame):
             day_date = str(day.day) + '. ' + day.strftime("%B")
             e.set_weather_forecast_entry((day_name,
                                           day_date,
-                                          icons.get_weather_image(weather.get_forecast_weather_code(i)),
+                                          icons.get_weather_image(weather.get_forecast_weather_code(i), style.WEATHER_FORECAST_IMAGE_SIZE),
                                           weather.get_forecast_min_max_temp(i),
                                           weather.get_forecast_wind_speed_10m(i),
                                           weather.get_forecast_precipitation_propability(i)))
@@ -251,7 +251,7 @@ class WeatherForecastEntryFrame(customtkinter.CTkFrame):
                                                    image=icons.get_weather_image('3', style.WEATHER_FORECAST_IMAGE_SIZE),
                                                    font=style.WEATHER_FONT)
         self.temp = customtkinter.CTkLabel(self, text='13 °C / 21 °C', font=style.FORECAST_FONT_BOLD)
-        self.wind = customtkinter.CTkLabel(self, text='🌫 20 Km/h', font=style.FORECAST_FONT_REG)
+        self.wind = customtkinter.CTkLabel(self, text='☴ 20 Km/h', font=style.FORECAST_FONT_REG)
         #self.wind_dir = customtkinter.CTkLabel(self, text='NW', font = FORECAST_FONT_LIGHT)
         #self.humidity = customtkinter.CTkLabel(self, text='💧 40 %', font=style.FORECAST_FONT_BOLD)
         self.rain = customtkinter.CTkLabel(self, text='☂ 50 %', font=style.FORECAST_FONT_REG)
@@ -278,8 +278,8 @@ class WeatherForecastEntryFrame(customtkinter.CTkFrame):
         self.day_date.configure(text=next[1])
         self.current_icon.configure(image=next[2])
         self.temp.configure(text=next[3][0] + ' / ' + next[3][1])
-        self.wind.configure(text='🍃 ' + next[4])
-        self.rain.configure(text='☔ ' + next[5])
+        self.wind.configure(text='☴ ' + next[4])
+        self.rain.configure(text='☂ ' + next[5])
 
 class TabView(customtkinter.CTkTabview):
     def __init__(self, master, **kwargs):
@@ -366,7 +366,7 @@ if __name__ == "__main__":
     icons = weather_icons.WeatherIcons()
     vvo = vvo_data.VVOData(config.STOP_ID)
     weather = weather_data.WeatherData(config.LOCATION[0], config.LOCATION[1])
-    customtkinter.set_appearance_mode("dark")
+    customtkinter.set_appearance_mode("light")
     customtkinter.set_default_color_theme("blue")
     app = App()
     app.mainloop()
