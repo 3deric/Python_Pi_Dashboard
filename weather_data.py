@@ -13,7 +13,7 @@ class WeatherData():
 
 		# Setup the Open-Meteo API client with cache and retry on error
 		self.cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
-		self.retry_session = retry(self.cache_session, retries=5, backoff_factor=0.2)
+		self.retry_session = retry(self.cache_session, retries=10, backoff_factor=1.0)
 		self.openmeteo = openmeteo_requests.Client(session=self.retry_session)
 
 		# Make sure all required weather variables are listed here
