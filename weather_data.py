@@ -22,6 +22,7 @@ class WeatherData():
 		self.params = {
 			"latitude": self.lat,
 			"longitude": self.long,
+			"hourly": ["temperature_2m", "precipitation_probability", "wind_speed_10m"],
 			"daily": ["weather_code", "temperature_2m_max", "temperature_2m_min", "precipitation_probability_max",
 					  "wind_speed_10m_max"],
 			"current": ["temperature_2m", "relative_humidity_2m", "weather_code", "wind_speed_10m",
@@ -69,7 +70,27 @@ class WeatherData():
 		daily_data["precipitation_probability_max"] = self.daily_precipitation_probability_max
 		daily_data["wind_speed_10m_max"] = self.daily_wind_speed_10m_max
 
-		self.daily_dataframe = pd.DataFrame(data = daily_data)
+		self.daily_dataframe = pd.DataFrame(data=daily_data)
+
+		hourly = response.Hourly()
+		self.hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
+		self.hourly_precipitation_propability = hourly.Variables(1).ValuesAsNumpy()
+		self.hourly_wind_speed_max = hourly.Variables(2).ValuesAsNumpy()
+
+		hourly_data = {
+			"date": pd.date_range(
+				start=pd.to_datetime(hourly.Time() + response.UtcOffsetSeconds(),unit="s",utc=True),
+				end=pd.to_datetime(hourly.TimeEnd() + response.UtcOffsetSeconds(),unit="s",utc=True),
+				freq=pd.Timedelta(seconds=hourly.Interval()),
+				inclusive="left"
+			)
+		}
+
+		hourly_data["temperature_2m"] 			 = self.hourly_temperature_2m
+		hourly_data["precipitation_probability"] = self.hourly_precipitation_propability
+		hourly_data["wind_speed_max"]			 = self.hourly_wind_speed_max
+
+		self.hourly_dataframe = pd.DataFrame(data = hourly_data)
 
 	def get_current_temperature(self) -> string:
 		return str(round(self.current_temperature_2m)) + ' °C'
@@ -104,19 +125,28 @@ class WeatherData():
 	def get_forecast_precipitation_propability(self, day : int) -> string:
 		return str(int(self.daily_dataframe['precipitation_probability_max'][day])) + ' %'
 
+	def get_forecast_hourly_temperature_2m(self):
+		return self.hourly_dataframe['temperature_2m']
+
+	def get_forecast_hourly_precipitation(self):
+		return self.hourly_dataframe['precipitation_probability']
+
+	def get_forecast_hourly_wind_speed_max(self):
+		return self.hourly_dataframe['wind_speed_max']
+
 if __name__ == "__main__":
 	weather = WeatherData(51.0509,13.7383)
 	weather.retrieve_data()
-
-	print(weather.get_current_temperature())
-	print(weather.get_current_relative_humidity())
-	print(weather.get_current_weather_code())
-	print(weather.get_current_wind_speed_10m())
-	print(weather.get_current_wind_direction_10m())
-	print(weather.get_forecast_precipitation_propability(0))
-
-	for i in range(0,7):
-		print(weather.get_forecast_min_max_temp(i))
-		print(weather.get_forecast_weather_code(i))
-		print(weather.get_forecast_wind_speed_10m(i))
-		print(weather.get_forecast_precipitation_propability(i))
+	#
+	# print(weather.get_current_temperature())
+	# print(weather.get_current_relative_humidity())
+	# print(weather.get_current_weather_code())
+	# print(weather.get_current_wind_speed_10m())
+	# print(weather.get_current_wind_direction_10m())
+	# print(weather.get_forecast_precipitation_propability(0))
+	#
+	# for i in range(0,7):
+	# 	print(weather.get_forecast_min_max_temp(i))
+	# 	print(weather.get_forecast_weather_code(i))
+	# 	print(weather.get_forecast_wind_speed_10m(i))
+	# 	print(weather.get_forecast_precipitation_propability(i))

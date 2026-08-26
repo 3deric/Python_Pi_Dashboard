@@ -235,6 +235,19 @@ class WeatherForecastFrame(customtkinter.CTkFrame):
         self.set_weather_entries()
         self.master.after(1800000, self.update)
 
+class WeatherForecastGraphFrame(customtkinter.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master, border_width = 1) # , fg_color = 'transparent'
+
+        self.update()
+
+    def set_weather_graph(self):
+        pass
+
+    def update(self):
+        self.set_weather_graph()
+        self.master.after(1800000, self.update)
+
 class WeatherForecastEntryFrame(customtkinter.CTkFrame):
     def __init__(self, master, i : int):
         super().__init__(master, fg_color= 'transparent')
@@ -287,6 +300,7 @@ class TabView(customtkinter.CTkTabview):
 
         self.transport = self.add('Transport')
         self.weather = self.add('Weather')
+        self.weather_graph = self.add('Weather Graph')
         #self.calendar = self.add('Calendar')
 
         self.transport_image = customtkinter.CTkImage(light_image=Image.open('img/directions_bus_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
@@ -295,18 +309,20 @@ class TabView(customtkinter.CTkTabview):
         self.weather_image = customtkinter.CTkImage(light_image=Image.open('img/cloud_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
                                                     dark_image=Image.open('img/cloud_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
                                                     size=(24, 24))
-        #self.calendar_image = customtkinter.CTkImage(light_image=Image.open('img/calendar_month_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
-        #                                            dark_image=Image.open('img/calendar_month_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
-        #                                            size=(24, 24))
+        self.calendar_image = customtkinter.CTkImage(light_image=Image.open('img/calendar_month_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
+                                                   dark_image=Image.open('img/calendar_month_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png'),
+                                                   size=(24, 24))
 
         self.transport_button = self._segmented_button._buttons_dict['Transport']
         self.weather_button = self._segmented_button._buttons_dict['Weather']
+        self.weather_graph_button = self._segmented_button._buttons_dict['Weather Graph']
         #self.calendar_button = self._segmented_button._buttons_dict['Calendar']
         self._segmented_button.grid(sticky='nsew', padx = 0, pady = 0)
         self._segmented_button.configure(corner_radius = 5, border_width = 1)
-        self.transport_button.configure(font=style.TAB_FONT, image = self.transport_image, text = 'Transport')
-        self.weather_button.configure(font=style.TAB_FONT, image = self.weather_image, text = 'Weather')
-        #self.calendar_button.configure(font=TAB_FONT, image = self.calendar_image, text = 'Calendar')
+        self.transport_button.configure(font=style.TAB_FONT, image = self.transport_image, text = 'Stop')
+        self.weather_button.configure(font=style.TAB_FONT, image = self.weather_image, text = 'Forecast')
+        self.weather_graph_button.configure(font=style.TAB_FONT, image = self.weather_image, text = 'Graph')
+        #self.calendar_button.configure(font=style.TAB_FONT, image = self.calendar_image, text = 'Calendar')
         self._segmented_button.configure(
             fg_color=customtkinter.ThemeManager.theme["CTkSegmentedButton"]["fg_color"],
             selected_color=customtkinter.ThemeManager.theme["CTkSegmentedButton"]["selected_color"],
@@ -349,8 +365,9 @@ class App(customtkinter.CTk):
 
         self.weather_forecast = WeatherForecastFrame(self.tab_view.tab('Weather'))
         self.weather_forecast.pack(expand=True, fill='both', pady = (style.PADDING,0))
-        #self.public_transport = PublicTransportFrame(self)
-        #self.public_transport.grid(column = 1, row = 0, rowspan = 2, padx = (0, style.PADDING), pady = (style.PADDING), sticky = 'nsew')
+
+        self.weather_forecast_graph = WeatherForecastGraphFrame(self.tab_view.tab('Weather Graph'))
+        self.weather_forecast_graph.pack(expand=True, fill='both', pady=(style.PADDING, 0))
 
     def toggle_fullscreen(self, event=None):
         self.fullscreen_state = not self.fullscreen_state  # Just toggling the boolean
@@ -364,11 +381,16 @@ class App(customtkinter.CTk):
 
 if __name__ == "__main__":
     icons = weather_icons.WeatherIcons()
+    print("retrieved weather icons")
     vvo = vvo_data.VVOData(config.STOP_ID)
+    print("retrieved vvo data")
     weather = weather_data.WeatherData(config.LOCATION[0], config.LOCATION[1])
+    print("retrieved weather data")
     customtkinter.set_appearance_mode("light")
     customtkinter.set_default_color_theme("blue")
+    print("setup design")
     app = App()
+    print("setup app")
     app.mainloop()
 
 
