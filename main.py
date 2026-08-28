@@ -1,12 +1,13 @@
 import customtkinter
 from PIL import Image
 from datetime import datetime, timedelta
-
-from pandas.core.interchange import column
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
+NavigationToolbar2Tk)
 
 import weather_icons
 import vvo_data
 import weather_data
+import weather_graph
 import style
 import config
 from vvo_data import get_time_delta
@@ -238,7 +239,11 @@ class WeatherForecastFrame(customtkinter.CTkFrame):
 class WeatherForecastGraphFrame(customtkinter.CTkFrame):
     def __init__(self, master):
         super().__init__(master, border_width = 1) # , fg_color = 'transparent'
-
+        fig = weather_graph.plot_weather_graph(weather, (5,3))
+        # create and draw the tkinter canvas
+        canvas = FigureCanvasTkAgg(fig, master=self)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
         self.update()
 
     def set_weather_graph(self):
