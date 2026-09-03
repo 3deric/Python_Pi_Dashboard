@@ -3,6 +3,7 @@ import string
 import openmeteo_requests
 
 import pandas as pd
+import requests
 import requests_cache
 from retry_requests import retry
 
@@ -30,7 +31,13 @@ class WeatherData():
 		}
 		
 	def retrieve_data(self):
-		responses = self.openmeteo.weather_api(self.url, params=self.params)
+		try:
+			responses = self.openmeteo.weather_api(self.url, params=self.params,timeout = 10)
+			self.data = responses
+
+		except Exception as e:
+			print(f"Open-Meteo request failed: {e}")
+
 		# Process first location. Add a for-loop for multiple locations or weather models
 		response = responses[0]
 		# print(response.Current().Variables(0).Value())

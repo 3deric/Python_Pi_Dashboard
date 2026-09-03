@@ -29,7 +29,7 @@ class VVOData():
             ]
         }
         try:
-            response = requests.post(url,json=attributes,timeout=5)
+            response = requests.post(url,json=attributes,timeout=10)
             response.raise_for_status()
             self.data = response.json()
 
