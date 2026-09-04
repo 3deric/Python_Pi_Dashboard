@@ -1,5 +1,3 @@
-import string
-
 import openmeteo_requests
 
 import pandas as pd
@@ -29,24 +27,24 @@ class WeatherData():
 						"wind_direction_10m", "precipitation_probability"],
 			"timezone": "Europe/Berlin",
 		}
-		
+
 	def retrieve_data(self):
 		try:
-			responses = self.openmeteo.weather_api(self.url, params=self.params,timeout = 10)
-			self.data = responses
-
+			responses = self.openmeteo.weather_api(
+				self.url,
+				params=self.params,
+				timeout=10
+			)
 		except Exception as e:
 			print(f"Open-Meteo request failed: {e}")
+			self.data = None
+			return False
 
-		# Process first location. Add a for-loop for multiple locations or weather models
+		self.data = responses
+
 		response = responses[0]
-		# print(response.Current().Variables(0).Value())
-		# print(f"Coordinates: {response.Latitude()}°N {response.Longitude()}°E")
-		# print(f"Elevation: {response.Elevation()} m asl")
-		# print(f"Timezone: {response.Timezone()}{response.TimezoneAbbreviation()}")
-		# print(f"Timezone difference to GMT+0: {response.UtcOffsetSeconds()}s")
 
-		# Process current data. The order of variables needs to be the same as requested.
+		# Process current data
 		current = response.Current()
 		self.current_temperature_2m = current.Variables(0).Value()
 		self.current_relative_humidity_2m = current.Variables(1).Value()
@@ -55,7 +53,7 @@ class WeatherData():
 		self.current_wind_direction_10m = current.Variables(4).Value()
 		self.current_precipitation_propability = current.Variables(5).Value()
 
-		# Process daily data. The order of variables needs to be the same as requested.
+		# Process daily data
 		daily = response.Daily()
 		self.daily_weather_code = daily.Variables(0).ValuesAsNumpy()
 		self.daily_temperature_2m_max = daily.Variables(1).ValuesAsNumpy()
@@ -63,43 +61,57 @@ class WeatherData():
 		self.daily_precipitation_probability_max = daily.Variables(3).ValuesAsNumpy()
 		self.daily_wind_speed_10m_max = daily.Variables(4).ValuesAsNumpy()
 
-		daily_data = {"date": pd.date_range(
-			start = pd.to_datetime(daily.Time() + response.UtcOffsetSeconds(), unit = "s", utc = True),
-			end =  pd.to_datetime(daily.TimeEnd() + response.UtcOffsetSeconds(), unit = "s", utc = True),
-			freq = pd.Timedelta(seconds = daily.Interval()),
-			inclusive = "left"
-		)}
+		daily_data = {
+			"date": pd.date_range(
+				start=pd.to_datetime(
+					daily.Time() + response.UtcOffsetSeconds(),
+					unit="s",
+					utc=True
+				),
+				end=pd.to_datetime(
+					daily.TimeEnd() + response.UtcOffsetSeconds(),
+					unit="s",
+					utc=True
+				),
+				freq=pd.Timedelta(seconds=daily.Interval()),
+				inclusive="left"
+			)
+		}
 
 		daily_data["weather_code"] = self.daily_weather_code
 		daily_data["temperature_2m_max"] = self.daily_temperature_2m_max
 		daily_data["temperature_2m_min"] = self.daily_temperature_2m_min
-		daily_data["precipitation_probability_max"] = self.daily_precipitation_probability_max
+		daily_data["precipitation_probability_max"] = (
+			self.daily_precipitation_probability_max
+		)
 		daily_data["wind_speed_10m_max"] = self.daily_wind_speed_10m_max
 
-		self.daily_dataframe = pd.DataFrame(data = daily_data)
+		self.daily_dataframe = pd.DataFrame(data=daily_data)
 
-	def get_current_temperature(self) -> string:
+		return True
+
+	def get_current_temperature(self) -> str:
 		return str(round(self.current_temperature_2m)) + ' °C'
 
-	def get_current_relative_humidity(self) -> string:
+	def get_current_relative_humidity(self) -> str:
 		return str(int(self.current_relative_humidity_2m)) + ' % rH'
 
 	def get_current_weather_code(self) -> str:
 		return str(self.current_weather_code)
 
-	def get_current_wind_speed_10m(self) -> string:
+	def get_current_wind_speed_10m(self) -> str:
 		return str(int(self.current_wind_speed_10m)) + ' m/s'
 
-	def get_current_wind_direction_10m(self) -> string:
+	def get_current_wind_direction_10m(self) -> str:
 		return str(self.current_wind_direction_10m)
 
-	def get_current_precipitation_propability(self) -> string:
+	def get_current_precipitation_propability(self) -> str:
 		return str(int(self.current_precipitation_propability)) + ' %'
 
-	def get_current_min_max_temp(self) -> string:
+	def get_current_min_max_temp(self) -> str:
 		return str(round(self.daily_dataframe['temperature_2m_min'][0])) + ' °C / ' + str(round(self.daily_dataframe['temperature_2m_max'][0])) + ' °C'
 
-	def get_forecast_weather_code(self, day : int) -> string:
+	def get_forecast_weather_code(self, day : int) -> str:
 		return str(int(self.daily_dataframe['weather_code'][day]))
 
 	def get_forecast_min_max_temp(self, day : int) -> tuple():
@@ -108,7 +120,7 @@ class WeatherData():
 	def get_forecast_wind_speed_10m(self, day : int) -> str:
 		return str(int(self.daily_dataframe['wind_speed_10m_max'][day])) + ' m/s'
 
-	def get_forecast_precipitation_propability(self, day : int) -> string:
+	def get_forecast_precipitation_propability(self, day : int) -> str:
 		return str(int(self.daily_dataframe['precipitation_probability_max'][day])) + ' %'
 
 if __name__ == "__main__":
