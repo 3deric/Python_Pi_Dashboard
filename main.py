@@ -74,7 +74,7 @@ class CurrentWeatherFrame(customtkinter.CTkFrame):
                 fc_seperator.grid(column=i, row=1, sticky='nse', padx=5, pady=5)
             self.weather_forecast.append(fc)
 
-        self.update()
+        #self.update()
 
     def set_weather_frame(self, weather : weather_data.WeatherData):
         self.current_weather.set_current_weather_view((weather.get_current_temperature(),
@@ -216,7 +216,7 @@ class WeatherForecastFrame(customtkinter.CTkFrame):
                  seperator.grid(sticky='new', padx=5, pady=0)
             self.entries.append(entry)
 
-        self.update()
+        #self.update()
 
     def set_weather_entries(self):
         today = datetime.today()
