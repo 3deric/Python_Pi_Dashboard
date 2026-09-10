@@ -36,10 +36,9 @@ class VVOData:
         self.session.mount("https://", adapter)
         self.session.mount("http://", adapter)
 
-    def retrieve_stop_data(self):
-        url = "https://webapi.vvo-online.de/dm"
+        self.url = "https://webapi.vvo-online.de/dm"
 
-        attributes = {
+        self.attributes = {
             "stopid": self.stopid,
             "limit": 10,
             "mot": [
@@ -54,12 +53,13 @@ class VVOData:
             ],
         }
 
+    def retrieve_stop_data(self):
         start = time.monotonic()
 
         try:
             response = self.session.post(
-                url,
-                json=attributes,
+                self.url,
+                json=self.attributes,
                 timeout=(10, 30),
             )
 
