@@ -275,7 +275,7 @@ class WeatherForecastEntryFrame(customtkinter.CTkFrame):
 
     def set_weather_forecast_entry(self, next : tuple):
         self.day.configure(text=next[0])
-        self.day_date.configure(text=next[1])
+        self.day_date.configure(text=next[1].split('.')[0]+'. ' + next[1].split('.')[1][:4])
         self.current_icon.configure(image=next[2])
         self.temp.configure(text=next[3][0] + ' / ' + next[3][1])
         self.wind.configure(text='☴ ' + next[4])
