@@ -69,11 +69,11 @@ class VVOData:
             data = response.json()
             self.data = data
 
-            print(
-                f"VVO request successful: "
-                f"stop={self.stopid}, "
-                f"time={elapsed:.2f}s"
-            )
+            #print(
+            #    f"VVO request successful: "
+            #    f"stop={self.stopid}, "
+            #    f"time={elapsed:.2f}s"
+            #)
             return True
 
         except requests.exceptions.Timeout:

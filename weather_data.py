@@ -65,10 +65,10 @@ class WeatherData():
 			self.data = data
 			self.process_data()
 
-			print(
-				f"OpenMeteo request successful: "
-				f"time={elapsed:.2f}s"
-			)
+			#print(
+			#	f"OpenMeteo request successful: "
+			#	f"time={elapsed:.2f}s"
+			#)
 			return True
 
 		except requests.exceptions.Timeout:
