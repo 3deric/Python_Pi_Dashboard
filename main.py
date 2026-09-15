@@ -242,11 +242,12 @@ class WeatherForecastGraphFrame(customtkinter.CTkFrame):
 
         self.graph_frame = customtkinter.CTkFrame(self, fg_color='green')
         self.graph_frame.pack(fill="both", expand=True, padx=4, pady=4)
+        self.graph_frame.pack_propagate(False)
 
         self.update()
 
     def set_weather_graph(self):
-        fig = weather_graph.plot_weather_graph(weather, (400,300))
+        fig = weather_graph.plot_weather_graph(weather)
         canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
