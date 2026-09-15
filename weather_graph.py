@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_weather_graph(weather : weather_data.WeatherData, size : tuple = (10,5)) -> plt.Figure:
+def plot_weather_graph(weather : weather_data.WeatherData, size : tuple = (500,420), dpi : int = 72) -> plt.Figure:
 	plt.style.use('_mpl-gallery')
-	fig, ax1 = plt.subplots(figsize=size)
+	fig, ax1 = plt.subplots(figsize=(size[0]/dpi, size[1]/dpi), dpi = dpi)
 
 	ax1.plot(weather.get_forecast_hourly_temperature_2m()[0:25], linewidth=2, color='r', label='Temperature (°C)')
 	ax1.set_xlabel('Hour')
