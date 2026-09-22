@@ -4,29 +4,31 @@ import weather_data
 import matplotlib.pyplot as plt
 import numpy as np
 
+LIGHT_COLOR = '#dbdbdb'
 
 def plot_weather_graph(weather : weather_data.WeatherData, size : tuple = (4,3)) -> plt.Figure:
 	plt.style.use('_mpl-gallery')
 	fig, ax1 = plt.subplots(figsize=size)
+	fig.patch.set_facecolor(LIGHT_COLOR)
 
-	ax1.plot(weather.get_forecast_hourly_temperature_2m()[0:25], linewidth=2, color='r', label='Temperature (°C)')
-	ax1.set_xlabel('Hour')
-	ax1.set_xticks(np.arange(0, 25, 2))
-	ax1.set_ylabel('Temperature (°C)', color='r')
-	# ax1.set_yticks(np.arange(-10,40,10))
-	ax1.tick_params(axis='y', labelcolor='r')
-	ax1.grid(False, "both", "y")
+	#ax1_plot = ax2.plot(weather.get_forecast_hourly_precipitation()[0:24], linewidth=2, label='Rain %')
+	#ax1.set_xlabel('Time in hours')
+	ax1_plot = ax1.bar(range(25),weather.get_forecast_hourly_precipitation()[0:25], color='#3b8ed0', label='Rain %')
+	#ax1.set_ylabel('Rain propability in %', color='b')
+	ax1.set_yticks(np.arange(0,101,25))
+	ax1.tick_params(axis='y', labelcolor='#3b8ed0')
+	ax1.grid(False)
+	ax1.set_facecolor(LIGHT_COLOR)
 
 	ax2 = ax1.twinx()
-	ax2.plot(weather.get_forecast_hourly_precipitation()[0:24], linewidth=2, label='Precipitation (mm)')
-	ax2.set_ylabel('Precipitation (mm)', color='b')
-	# ax2.set_yticks(np.arange(0,101,10))
-	ax2.tick_params(axis='y', labelcolor='b')
-	ax2.grid(False)
+	ax2_plot = ax2.plot(weather.get_forecast_hourly_temperature_2m()[0:25], linewidth=2, color='#ca696e', label='Temp (°C)')
+	ax2.set_xticks(np.arange(0, 25, 6))
+	#ax2.set_ylabel('Temperature in °C', color='r')
+	ax2.tick_params(axis='y', labelcolor='#ca696e')
+	ax2.grid(False, "both", "y")
+	ax2.set_facecolor(LIGHT_COLOR)
 
-	# plt.title('Weather Forecast')
 	fig.tight_layout()
-	print(fig)
 	return fig
 
 

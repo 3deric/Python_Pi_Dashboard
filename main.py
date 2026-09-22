@@ -1,3 +1,5 @@
+from xxlimited_35 import Null
+
 import customtkinter
 from PIL import Image
 from datetime import datetime, timedelta
@@ -240,18 +242,20 @@ class WeatherForecastGraphFrame(customtkinter.CTkFrame):
     def __init__(self, master):
         super().__init__(master, border_width = 1) # , fg_color = 'transparent'
 
-        self.graph_frame = customtkinter.CTkFrame(self, fg_color='green')
+        self.graph_frame = customtkinter.CTkFrame(self)
         self.graph_frame.pack(fill="both", expand=True, padx=4, pady=4)
         self.graph_frame.pack_propagate(False)
-
+        self.canvas = None
+        self.fig = None
         self.update()
 
     def set_weather_graph(self):
-        fig = weather_graph.plot_weather_graph(weather)
-        canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill="both", expand=True)
-        self.canvas = canvas
+        self.fig = weather_graph.plot_weather_graph(weather)
+        if self.canvas is not None:
+            self.canvas.get_tk_widget().destroy()
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.graph_frame)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(fill="both", expand=True)
 
     def update(self):
         self.set_weather_graph()
@@ -400,6 +404,28 @@ if __name__ == "__main__":
     print("setup design")
     app = App()
     print("setup app")
+
+
+    def on_closing():
+        try:
+            for after_id in app.tk.call('after', 'info'):
+                app.after_cancel(after_id)
+        except Exception:
+            pass
+        try:
+            import matplotlib.pyplot as plt
+            plt.close('all')
+        except Exception:
+            pass
+        try:
+            app.destroy()
+        except Exception:
+            pass
+        import sys
+        sys.exit(0)
+
+    app.protocol("WM_DELETE_WINDOW", on_closing)
+
     app.mainloop()
 
 
