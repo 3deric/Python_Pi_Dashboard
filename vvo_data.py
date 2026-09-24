@@ -1,51 +1,118 @@
+import time
+import pytz
 import requests
 from datetime import datetime, timezone, timedelta
 import re
-import pytz
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 TIMEZONE = 'Europe/Berlin'
 
-class VVOData():
-    def __init__(self, stopid : str):
-        self.timezone = pytz.timezone('Europe/Berlin')
+class VVOData:
+    def __init__(self, stopid: str):
+        self.timezone = pytz.timezone("Europe/Berlin")
         self.stopid = stopid
         self.data = {}
 
+        self.session = requests.Session()
+
+        retry = Retry(
+            total=3,
+            connect=3,
+            read=3,
+            status=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["POST"],
+            raise_on_status=False,
+        )
+
+        adapter = HTTPAdapter(
+            max_retries=retry,
+            pool_connections=1,
+            pool_maxsize=1,
+        )
+
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
+
+        self.url = "https://webapi.vvo-online.de/dm"
+
+        self.attributes = {
+            "stopid": self.stopid,
+            "limit": 10,
+            "mot": [
+                "Tram",
+                "CityBus",
+                "IntercityBus",
+                "SuburbanRailway",
+                "Train",
+                "Cableway",
+                "Ferry",
+                "HailedSharedTaxi",
+            ],
+        }
 
     def retrieve_stop_data(self):
-        url = 'https://webapi.vvo-online.de/dm'
-        attributes = {
-        "stopid": self.stopid,
-        "limit": 10,
-        "mot": [
-            "Tram",
-            "CityBus",
-            "IntercityBus",
-            "SuburbanRailway",
-            "Train",
-            "Cableway",
-            "Ferry",
-            "HailedSharedTaxi"
-            ]
-        }
-        try:
-            response = requests.post(url,json=attributes,timeout=10)
-            response.raise_for_status()
-            self.data = response.json()
+        start = time.monotonic()
 
-        except requests.exceptions.ConnectionError:
-            print("No internet connection.")
+        try:
+            response = self.session.post(
+                self.url,
+                json=self.attributes,
+                timeout=(10, 30),
+            )
+
+            elapsed = time.monotonic() - start
+
+            response.raise_for_status()
+            data = response.json()
+            self.data = data
+
+            #print(
+            #    f"VVO request successful: "
+            #    f"stop={self.stopid}, "
+            #    f"time={elapsed:.2f}s"
+            #)
+            return True
 
         except requests.exceptions.Timeout:
-            print("Request timed out.")
+            print(
+                f"VVO request timed out: "
+                f"stop={self.stopid}"
+            )
+
+        except requests.exceptions.ConnectionError as e:
+            print(
+                f"VVO connection error: "
+                f"stop={self.stopid}: {e}"
+            )
 
         except requests.exceptions.HTTPError as e:
-            print(f"HTTP error: {e}")
+            print(
+                f"VVO HTTP error: "
+                f"stop={self.stopid}, "
+                f"status={response.status_code}: {e}"
+            )
+
+        except ValueError as e:
+            print(
+                f"VVO returned invalid JSON: "
+                f"stop={self.stopid}: {e}"
+            )
 
         except requests.exceptions.RequestException as e:
-            # catches all other requests-related errors
-            print(f"Request failed: {e}")
+            print(
+                f"VVO request failed: "
+                f"stop={self.stopid}: {e}"
+            )
 
+        except Exception as e:
+            print(
+                f"Unexpected error retrieving VVO data: "
+                f"stop={self.stopid}: {e}"
+            )
+        return False
 
     def get_data_value(self, i : int,  key : str) -> str:
         try:

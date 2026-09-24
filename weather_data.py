@@ -1,24 +1,39 @@
-import openmeteo_requests
-
+import time
 import pandas as pd
+import numpy as np
 import requests
-import requests_cache
-from retry_requests import retry
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 class WeatherData():
 	def __init__(self, lat, long):
 		self.lat = lat
 		self.long = long
 
-		# Setup the Open-Meteo API client with cache and retry on error
-		self.cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
-		self.retry_session = retry(self.cache_session, retries=10, backoff_factor=1.0)
-		self.openmeteo = openmeteo_requests.Client(session=self.retry_session)
+		self.session = requests.Session()
 
-		# Make sure all required weather variables are listed here
-		# The order of variables in hourly or daily is important to assign them correctly below
+		retry = Retry(
+			total=3,
+			connect=3,
+			read=3,
+			status=3,
+			backoff_factor=1,
+			status_forcelist=[429, 500, 502, 503, 504],
+			allowed_methods=["POST"],
+			raise_on_status=False,
+		)
+
+		adapter = HTTPAdapter(
+			max_retries=retry,
+			pool_connections=1,
+			pool_maxsize=1,
+		)
+
+		self.session.mount("https://", adapter)
+		self.session.mount("http://", adapter)
+
 		self.url = "https://api.open-meteo.com/v1/forecast"
-		self.params = {
+		self.attributes = {
 			"latitude": self.lat,
 			"longitude": self.long,
 			"daily": ["weather_code", "temperature_2m_max", "temperature_2m_min", "precipitation_probability_max",
@@ -28,67 +43,110 @@ class WeatherData():
 			"timezone": "Europe/Berlin",
 		}
 
+
 	def retrieve_data(self):
+
+
+
+
+		start = time.monotonic()
+
 		try:
-			responses = self.openmeteo.weather_api(
+			response = self.session.get(
 				self.url,
-				params=self.params,
-				timeout=10
+				params = self.attributes,
+				timeout=(10, 30),
 			)
+
+			elapsed = time.monotonic() - start
+
+			response.raise_for_status()
+			data = response.json()
+			self.data = data
+			self.process_data()
+
+			#print(
+			#	f"OpenMeteo request successful: "
+			#	f"time={elapsed:.2f}s"
+			#)
+			return True
+
+		except requests.exceptions.Timeout:
+			print(
+				f"OpenMeteo request timed out: "
+			)
+
+		except requests.exceptions.ConnectionError as e:
+			print(
+				f"OpenMeteo connection error: "
+				f"{e}"
+			)
+
+		except requests.exceptions.HTTPError as e:
+			print(
+				f"OpenMeteo HTTP error: "
+				f"status={response.status_code}: {e}"
+			)
+
+		except ValueError as e:
+			print(
+				f"Open Meteo returned invalid JSON: "
+				f"{e}"
+			)
+
+		except requests.exceptions.RequestException as e:
+			print(
+				f"Open Meteo request failed: "
+				f"{e}"
+			)
+
 		except Exception as e:
-			print(f"Open-Meteo request failed: {e}")
-			self.data = None
-			return False
+			print(
+				f"Unexpected error retrieving Open Meteo data: "
+				f"{e}"
+			)
 
-		self.data = responses
+		return False
 
-		response = responses[0]
+	def process_data(self):
+		data = self.data
 
 		# Process current data
-		current = response.Current()
-		self.current_temperature_2m = current.Variables(0).Value()
-		self.current_relative_humidity_2m = current.Variables(1).Value()
-		self.current_weather_code = str(int(current.Variables(2).Value()))
-		self.current_wind_speed_10m = current.Variables(3).Value()
-		self.current_wind_direction_10m = current.Variables(4).Value()
-		self.current_precipitation_propability = current.Variables(5).Value()
+		current = data["current"]
+
+		self.current_temperature_2m = current["temperature_2m"]
+		self.current_relative_humidity_2m = current["relative_humidity_2m"]
+		self.current_weather_code = str(int(current["weather_code"]))
+		self.current_wind_speed_10m = current["wind_speed_10m"]
+		self.current_wind_direction_10m = current["wind_direction_10m"]
+		self.current_precipitation_propability = current["precipitation_probability"]
 
 		# Process daily data
-		daily = response.Daily()
-		self.daily_weather_code = daily.Variables(0).ValuesAsNumpy()
-		self.daily_temperature_2m_max = daily.Variables(1).ValuesAsNumpy()
-		self.daily_temperature_2m_min = daily.Variables(2).ValuesAsNumpy()
-		self.daily_precipitation_probability_max = daily.Variables(3).ValuesAsNumpy()
-		self.daily_wind_speed_10m_max = daily.Variables(4).ValuesAsNumpy()
+		daily = data["daily"]
 
+		self.daily_weather_code = np.array(daily["weather_code"])
+		self.daily_temperature_2m_max = np.array(daily["temperature_2m_max"])
+		self.daily_temperature_2m_min = np.array(daily["temperature_2m_min"])
+		self.daily_precipitation_probability_max = np.array(
+			daily["precipitation_probability_max"]
+		)
+		self.daily_wind_speed_10m_max = np.array(
+			daily["wind_speed_10m_max"]
+		)
+
+		# Create daily DataFrame
 		daily_data = {
-			"date": pd.date_range(
-				start=pd.to_datetime(
-					daily.Time() + response.UtcOffsetSeconds(),
-					unit="s",
-					utc=True
-				),
-				end=pd.to_datetime(
-					daily.TimeEnd() + response.UtcOffsetSeconds(),
-					unit="s",
-					utc=True
-				),
-				freq=pd.Timedelta(seconds=daily.Interval()),
-				inclusive="left"
-			)
+			"date": pd.to_datetime(daily["time"]),
+			"weather_code": self.daily_weather_code,
+			"temperature_2m_max": self.daily_temperature_2m_max,
+			"temperature_2m_min": self.daily_temperature_2m_min,
+			"precipitation_probability_max": (
+				self.daily_precipitation_probability_max
+			),
+			"wind_speed_10m_max": self.daily_wind_speed_10m_max
 		}
 
-		daily_data["weather_code"] = self.daily_weather_code
-		daily_data["temperature_2m_max"] = self.daily_temperature_2m_max
-		daily_data["temperature_2m_min"] = self.daily_temperature_2m_min
-		daily_data["precipitation_probability_max"] = (
-			self.daily_precipitation_probability_max
-		)
-		daily_data["wind_speed_10m_max"] = self.daily_wind_speed_10m_max
-
 		self.daily_dataframe = pd.DataFrame(data=daily_data)
-
-		return True
 
 	def get_current_temperature(self) -> str:
 		return str(round(self.current_temperature_2m)) + ' °C'
